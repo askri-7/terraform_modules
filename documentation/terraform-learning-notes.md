@@ -1,4 +1,5 @@
-# Terraform — My Learning Notes
+# Terraform — My Learning Notes_01
+
 
 > Personal notes while learning Terraform, starting with Azure (`azurerm` provider).
 > Add examples, gotchas, and links as you go — this is a living document.
