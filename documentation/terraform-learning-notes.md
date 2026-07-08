@@ -54,16 +54,15 @@ provider "azurerm" {
 - `required_version` = minimum Terraform CLI version.
 - `~> 3.0.2` = allow patch/minor updates within `3.0.x`, but not `3.1+`.
 - Running `terraform init` downloads the provider plugin into a local `.terraform/` folder.
-
-**My notes:**
-- There are many providers, each specified in something like:
-| Provider      | Publisher | Purpose                                   | When to use it                          |
+**notes:
+  
+| Provider      | Publisher | Purpose                                    | When to use it                           |
 |---------------|-----------|--------------------------------------------|------------------------------------------|
-| `azurerm`     | HashiCorp | Standard Azure infra (VMs, storage, RGs)    | Default choice, almost always            |
-| `azapi`       | Microsoft | Raw ARM API access, preview features        | New features not yet in `azurerm`        |
-| `azuread`     | HashiCorp | Microsoft Entra ID (users, groups, apps)    | Managing identity/access resources       |
-| `azuredevops` | Microsoft | Azure DevOps automation                     | Automating repos/pipelines/boards        |
-| `azurestack`  | Microsoft | Azure Stack Hub (on-prem)                   | On-prem hybrid Azure deployments         |
+| `azurerm`     | HashiCorp | Standard Azure infra (VMs, storage, RGs)   | Default choice, almost always            |
+| `azapi`       | Microsoft | Raw ARM API access, preview features       | New features not yet in `azurerm`        |
+| `azuread`     | HashiCorp | Microsoft Entra ID (users, groups, apps)   | Managing identity/access resources       |
+| `azuredevops` | Microsoft | Azure DevOps automation                    | Automating repos/pipelines/boards        |
+| `azurestack`  | Microsoft | Azure Stack Hub (on-prem)                  | On-prem hybrid Azure deployments         |
 
 ### 2.2 Resources
 
