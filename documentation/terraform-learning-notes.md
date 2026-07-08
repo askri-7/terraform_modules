@@ -54,7 +54,7 @@ provider "azurerm" {
 - `required_version` = minimum Terraform CLI version.
 - `~> 3.0.2` = allow patch/minor updates within `3.0.x`, but not `3.1+`.
 - Running `terraform init` downloads the provider plugin into a local `.terraform/` folder.
-**notes:
+**notes:**
   
 | Provider      | Publisher | Purpose                                    | When to use it                           |
 |---------------|-----------|--------------------------------------------|------------------------------------------|
