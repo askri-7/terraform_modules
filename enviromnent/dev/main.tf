@@ -4,9 +4,11 @@ data "azurerm_resource_group" "rg" {
 
 /*
 module "VM" {
+    source  = "../../modules/VM"
   
 }
 module "Vnet" {
+    source  = "../../modules/Vnet"
 
 }
 */
