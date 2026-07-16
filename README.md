@@ -8,11 +8,12 @@
 .
 ├── documentation/          # Architecture docs
 ├── environment/            # Root configs per environment (calls modules)
-│   ├── demo/
 │   ├── dev/
+    ├── qa/
+    ├── demo/
 │   ├── preprod/
 │   ├── prod/
-│   └── qa/
+│   
 ├── modules/                 # Reusable Terraform building blocks
 │   ├── RG/                  # Resource Group module
 │   ├── VM/                  # Virtual Machine module
