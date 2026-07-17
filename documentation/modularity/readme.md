@@ -1,4 +1,4 @@
-# Terraform Modules — Day 3
+# Terraform Modules 
 
 ## 1. What is a module?
 
