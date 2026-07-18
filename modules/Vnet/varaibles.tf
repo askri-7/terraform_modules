@@ -26,66 +26,24 @@ variable "ddos_protection_plan" {
   description = "ddos_plan"
 }
 
-variable "subnet_name" {
-    type = string
-    description = " subnet name"  
-}
 
-variable "address_prefixes" {
-    type =  list(string)
-    description = "subnet adress"
-}
-
-
-
-variable "nsg_name" {
-  type = string
-  description = "security group name."
-}
-
-
-variable "security_rules" {
-  type = string
-  description = "security rules name"
+variable "dynamic_subnets" {
+    type = map(object({cidr_block = string
+                       security_rules =list(object({name = string 
+                                                    priority = number 
+                                                    direction                  = string
+                                                    access                     = string
+                                                    protocol                   = string
+                                                    source_port_range          = string
+                                                    destination_port_range     = string
+                                                    source_address_prefix      = string
+                                                    destination_address_prefix = string}))
+}))
+    description = "map of dynamic subnets security rule block as dynamic var"
 }
 
 
-variable "sr_priority" {
-  type = number
-  description = "security rules priority"
-}
 
-variable "sr_direction" {
-  type  = string
-  description = "direction of the rule (Inbound or Outbound)."
-}
 
-variable "sr_access" {
-  type = string
-  description = "Access for the rule (Allow or Deny)."
-}
 
-variable "sr_protocol" {
-  type = string
-  description = "Protocol (Tcp, Udp, Icmp, or *)."
-}
 
-variable "sr_source_port_range" {
-  type = string
-  description = "source port or port range."
-}
-
-variable "sr_destination_port_range" {
-  type = string
-  description = "Destination port or port range."
-}
-
-variable "source_address_prefix" {
-  type = string
-  description = "source address prefix."
-}
-
-variable "destination_address_prefix" {
-  type = string
-  description = "destination address prefix."
-}
