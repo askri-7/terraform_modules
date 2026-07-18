@@ -1,4 +1,4 @@
-# Terraform Data Structures & Loops (Azure / azurerm)
+# Terraform Data Structures & Loops 
 
 A reference for Terraform's type system, how the types interact/nest, and when you actually need a loop (`for`, `for_each`, `count`, `dynamic`) — examples using the `azurerm` provider.
 
