@@ -17,6 +17,7 @@
 ├── modules/                 # Reusable Terraform building blocks
 │   ├── RG/                  # Resource Group module
 │   ├── VM/                  # Virtual Machine module
+    ├──  public_ip           # public ip generator
 │   └── Vnet/                # Virtual Network module
 └── README.md
 ```
