@@ -1,1 +1,124 @@
-resource_group_name = 
+resource_group_name  = ""
+storage_account_name = ""
+location             = ""
+
+virtual_network_name = ""
+
+address_space = [
+  ""
+]
+
+ddos_protection_plan = null
+
+dynamic_subnets = {
+  frontend = {
+    cidr_block = ""
+
+    security_rules = [
+      {
+        name                       = ""
+        priority                   = 0
+        direction                  = ""
+        access                     = ""
+        protocol                   = ""
+        source_port_range          = ""
+        destination_port_range     = ""
+        source_address_prefix      = ""
+        destination_address_prefix = ""
+      }
+    ]
+  }
+
+  backend = {
+    cidr_block = ""
+
+    security_rules = [
+      {
+        name                       = ""
+        priority                   = 0
+        direction                  = ""
+        access                     = ""
+        protocol                   = ""
+        source_port_range          = ""
+        destination_port_range     = ""
+        source_address_prefix      = ""
+        destination_address_prefix = ""
+      }
+    ]
+  }
+
+  database = {
+    cidr_block = ""
+
+    security_rules = [
+      {
+        name                       = ""
+        priority                   = 0
+        direction                  = ""
+        access                     = ""
+        protocol                   = ""
+        source_port_range          = ""
+        destination_port_range     = ""
+        source_address_prefix      = ""
+        destination_address_prefix = ""
+      }
+    ]
+  }
+
+  redis = {
+    cidr_block = ""
+
+    security_rules = [
+      {
+        name                       = ""
+        priority                   = 0
+        direction                  = ""
+        access                     = ""
+        protocol                   = ""
+        source_port_range          = ""
+        destination_port_range     = ""
+        source_address_prefix      = ""
+        destination_address_prefix = ""
+      }
+    ]
+  }
+}
+
+pub_ips = {
+  frontend = {
+    public_ip_location = ""
+    allocation         = ""
+  }
+}
+
+nic_name = ""
+
+ip_conf = {
+  name       = ""
+  allocation = ""
+}
+
+virtual_machine_vars = {
+  name           = ""
+  size           = ""
+  admin_username = ""
+  computer_name  = ""
+}
+
+os_disk = {
+  name                 = ""
+  caching              = ""
+  storage_account_type = ""
+}
+
+source_image = {
+  publisher = ""
+  offer     = ""
+  sku       = ""
+  version   = ""
+}
+
+boot_diagnostics = {
+  enabled             = false
+  storage_account_uri = null
+}
