@@ -1,6 +1,6 @@
 
 output "virtual_network_id" {
-  value       = module.vnet.vnet_id
+  value = module.vnet.vnet_id
 }
 
 output "subnet_ids" {
