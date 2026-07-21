@@ -40,4 +40,5 @@ module "vm" {
   os_disk              = var.os_disk
   source_image         = var.source_image
   boot_diagnostics     = var.boot_diagnostics
+  disks                = var.disks
 }

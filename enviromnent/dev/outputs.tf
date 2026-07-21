@@ -39,7 +39,7 @@ output "network_interface_id" {
 }
 
 output "private_ip_address" {
-  description = "Private IP address of the VM"
+  description = "private IP address of the VM"
   value       = module.vm.private_ip_address
 }
 

@@ -5,7 +5,6 @@
 crash.log
 *.tfvars      
 .terraform.lock.hcl   
-backend-dev.conf
 terraform.tfvars
-tfplan
+*tfplan
 .gitignore

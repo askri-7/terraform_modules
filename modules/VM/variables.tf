@@ -73,3 +73,14 @@ variable "boot_diagnostics" {
   }
    description = "boot diagnostics configuration"
 }
+
+variable "disks"  {
+      type = map(object({
+        name = string
+        storage_account_type = string
+        create_option = string
+        disk_size_gb = number
+        lun = number
+        caching = string
+      }))
+}
