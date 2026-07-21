@@ -3,13 +3,13 @@ name: Terraform CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
+    branches: [test]
   pull_request:
-    branches: [main]
+    branches: [test]
   workflow_dispatch:
 
 env:
-  TF_WORKING_DIR: "."          # change if your .tf files live in a subfolder, e.g. "./infra"
+  TF_WORKING_DIR: "./environment/dev"          # change if your .tf files live in a subfolder, e.g. "./infra"
   TF_VERSION: "1.9.0"
 
 permissions:

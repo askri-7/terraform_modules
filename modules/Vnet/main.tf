@@ -5,14 +5,14 @@ resource "azurerm_virtual_network" "vnet"{
     resource_group_name = var.resource_group_name
     address_space = var.address_space # private ip adress range
     # configure ddos protection
-    dynamic "ddos_protection_plan" {
+    /*dynamic "ddos_protection_plan" {
         for_each = var.ddos_protection_plan != null ? [var.ddos_protection_plan] : []
         content {
           enable = ddos_protection_plan.value.enable
           id     = ddos_protection_plan.value.id
         }
     }
-
+*/
 }
 #subnet
 resource "azurerm_subnet" "dynamic" {
