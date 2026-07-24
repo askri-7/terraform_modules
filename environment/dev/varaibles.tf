@@ -2,11 +2,12 @@ variable "resource_group_name" {
   type        = string
   description = "the resource group name"
 }
-
+/*
 variable "storage_account_name" {
   type = string
 
 }
+*/
 # vnet vars
 
 

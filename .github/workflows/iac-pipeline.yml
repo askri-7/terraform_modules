@@ -11,6 +11,7 @@ on:
 env:
   TF_WORKING_DIR: "environment/dev/"          
   TF_VERSION: "1.15.7"
+  TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
 
 permissions:
   contents: read
@@ -47,7 +48,7 @@ jobs:
           soft_fail: false        # set true if you want it to warn only, not fail the pipeline
           skip_check: CKV_AZURE_50, CKV_AZURE_93 , CKV_AZURE_160 # configure redirection later in ngnix
 
-      # --- TFLint: Terraform linting ---
+      # --- TFLint: Terraform linting ---s
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
         with:
