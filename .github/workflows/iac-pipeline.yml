@@ -116,8 +116,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: terraform-plan
     environment:
-      name: production        # <-- this environment must have "required reviewers" set in repo settings
-    steps:
+      name: dev        # <-- this environment must have "required reviewers" set in repo settings
+    steps:             # no required reviewers set yet /public repo needed
       - name: Checkout code
         uses: actions/checkout@v4
 
