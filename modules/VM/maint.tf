@@ -58,15 +58,15 @@ resource "azurerm_linux_virtual_machine" "vm" {
 }
 
 resource "azurerm_managed_disk" "data" {
-  for_each             = var.disks
-  name                 = "${var.naming.project}-${var.naming.environment}-${each.key}-disk"
-  location             = var.location
-  resource_group_name  = var.resource_group_name
-  storage_account_type = each.value.storage_account_type
-  create_option        = each.value.create_option
-  disk_size_gb         = each.value.disk_size_gb
-  network_access_policy = each.value.network_access_policy
-  tags                 = var.tags
+  for_each                      = var.disks
+  name                          = "${var.naming.project}-${var.naming.environment}-${each.key}-disk"
+  location                      = var.location
+  resource_group_name           = var.resource_group_name
+  storage_account_type          = each.value.storage_account_type
+  create_option                 = each.value.create_option
+  disk_size_gb                  = each.value.disk_size_gb
+  public_network_access_enabled = each.value.public_network_access_enabled
+  tags                          = var.tags
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "disk-attachment" {
