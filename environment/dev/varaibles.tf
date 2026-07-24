@@ -122,6 +122,7 @@ variable "disks" {
     disk_size_gb         = number
     lun                  = number
     caching              = string
+    network_access_policy= string
   }))
 }
 variable "tags" {
