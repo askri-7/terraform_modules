@@ -6,14 +6,14 @@ resource "azurerm_virtual_network" "vnet" {
   address_space       = var.address_space # private ip adress range
 
   # configure ddos protection
-  /*dynamic "ddos_protection_plan" {
+    dynamic "ddos_protection_plan" {
         for_each = var.ddos_protection_plan != null ? [var.ddos_protection_plan] : []
         content {
           enable = ddos_protection_plan.value.enable
           id     = ddos_protection_plan.value.id
         }
     }
-*/
+
   tags = var.tags
 }
 #subnet
@@ -34,7 +34,7 @@ resource "azurerm_network_security_group" "dynamic" {
   name                = "${var.naming.project}-${var.naming.environment}-${each.key}-nsg"
   location            = azurerm_virtual_network.vnet.location
   resource_group_name = var.resource_group_name
-
+  #skip CKV_AZURE_160 allow http on 80 to redirect later
   dynamic "security_rule" { # security_rule is the itterator
     for_each = each.value.security_rules
     content {

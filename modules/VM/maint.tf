@@ -15,7 +15,7 @@ resource "azurerm_network_interface" "nic" {
 }
 
 # virtual machine configuration
-
+# skip CKV_AZURE_50 virtual machine extension
 resource "azurerm_linux_virtual_machine" "vm" {
   name                = "${var.naming.project}-${var.naming.environment}-vm"
   resource_group_name = var.resource_group_name
@@ -56,7 +56,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
   tags = var.tags
 }
-
+# skip CKV_AZURE_93 use the default azure key encryption 
 resource "azurerm_managed_disk" "data" {
   for_each                      = var.disks
   name                          = "${var.naming.project}-${var.naming.environment}-${each.key}-disk"
