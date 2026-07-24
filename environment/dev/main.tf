@@ -30,7 +30,7 @@ module "vm" {
 
   location            = var.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  ssh_public_key      = file("~/.ssh/id_rsa.pub")
+  ssh_public_key      = var.ssh_public_key
 
   nic_vars = {
     subnet_id = module.vnet.subnet_ids["frontend"]

@@ -115,6 +115,10 @@ variable "boot_diagnostics" {
   description = "boot diagnostics configuration"
 }
 
+variable "ssh_public_key" {
+  type = string
+}
+
 variable "disks" {
   type = map(object({
     storage_account_type          = string
