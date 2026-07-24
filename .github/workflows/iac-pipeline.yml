@@ -88,9 +88,9 @@ jobs:
       #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       #     aws-region: us-east-1
 
-      #- name: Terraform Init
-      #  working-directory: ${{ env.TF_WORKING_DIR }}
-      #  run: terraform init -input=false
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init -input=false
 
       - name: Terraform Validate
         working-directory: ${{ env.TF_WORKING_DIR }}
