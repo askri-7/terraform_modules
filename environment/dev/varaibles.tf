@@ -117,12 +117,12 @@ variable "boot_diagnostics" {
 
 variable "disks" {
   type = map(object({
-    storage_account_type = string
-    create_option        = string
-    disk_size_gb         = number
-    lun                  = number
-    caching              = string
-    network_access_policy= string
+    storage_account_type          = string
+    create_option                 = string
+    disk_size_gb                  = number
+    lun                           = number
+    caching                       = string
+    public_network_access_enabled = bool
   }))
 }
 variable "tags" {
