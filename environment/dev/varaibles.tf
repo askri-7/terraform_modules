@@ -115,23 +115,23 @@ variable "boot_diagnostics" {
   description = "boot diagnostics configuration"
 }
 
-variable "disks"  {
-      type = map(object({
-        storage_account_type = string
-        create_option = string
-        disk_size_gb = number
-        lun = number
-        caching = string
-      }))
+variable "disks" {
+  type = map(object({
+    storage_account_type = string
+    create_option        = string
+    disk_size_gb         = number
+    lun                  = number
+    caching              = string
+  }))
 }
 variable "tags" {
-      type = map(string)
+  type = map(string)
 }
 
 variable "naming" {
   type = object({
-     project  = string
-     environment = string
+    project     = string
+    environment = string
 
   })
 }

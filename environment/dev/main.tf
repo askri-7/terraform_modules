@@ -14,16 +14,16 @@ module "vnet" {
   address_space            = var.address_space
   ddos_protection_plan     = var.ddos_protection_plan
   dynamic_subnets          = var.dynamic_subnets
-  naming = var.naming
-  tags = var.tags
+  naming                   = var.naming
+  tags                     = var.tags
 }
 
 module "public_ip" {
   source              = "../../modules/public_ip"
   resource_group_name = data.azurerm_resource_group.rg.name
   pub_ips             = var.pub_ips
-  naming = var.naming
-  tags = var.tags
+  naming              = var.naming
+  tags                = var.tags
 }
 module "vm" {
   source = "../../modules/VM"
@@ -43,6 +43,6 @@ module "vm" {
   source_image         = var.source_image
   boot_diagnostics     = var.boot_diagnostics
   disks                = var.disks
-  naming = var.naming
-  tags = var.tags
+  naming               = var.naming
+  tags                 = var.tags
 }
