@@ -8,10 +8,6 @@ variable "storage_account_name" {
 
 }
 # vnet vars
-variable "virtual_network_name" {
-  type        = string
-  description = "Vnet name"
-}
 
 
 variable "address_space" {
@@ -64,10 +60,6 @@ variable "location" {
 
 }
 
-variable "nic_name" {
-  type = string
-
-}
 
 variable "ip_conf" {
   type = object({
@@ -84,7 +76,6 @@ variable "ip_conf" {
 
 variable "virtual_machine_vars" {
   type = object({
-    name           = string
     size           = string
     admin_username = string
     computer_name  = string
@@ -126,7 +117,6 @@ variable "boot_diagnostics" {
 
 variable "disks"  {
       type = map(object({
-        name = string
         storage_account_type = string
         create_option = string
         disk_size_gb = number
@@ -134,11 +124,17 @@ variable "disks"  {
         caching = string
       }))
 }
+variable "tags" {
+      type = map(string)
+}
 
+variable "naming" {
+  type = object({
+     project  = string
+     environment = string
 
-
-
-
+  })
+}
 
 
 

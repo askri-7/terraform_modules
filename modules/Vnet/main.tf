@@ -1,9 +1,10 @@
 # make a vnet with ddos var plan
 resource "azurerm_virtual_network" "vnet"{
-    name     = var.virtual_network_name
+    name     = "${var.naming.project}-${var.naming.environment}-vnet"
     location = var.virtual_network_location
     resource_group_name = var.resource_group_name
     address_space = var.address_space # private ip adress range
+
     # configure ddos protection
     /*dynamic "ddos_protection_plan" {
         for_each = var.ddos_protection_plan != null ? [var.ddos_protection_plan] : []
@@ -13,6 +14,7 @@ resource "azurerm_virtual_network" "vnet"{
         }
     }
 */
+    tags = var.tags
 }
 #subnet
 resource "azurerm_subnet" "dynamic" {
@@ -22,13 +24,14 @@ resource "azurerm_subnet" "dynamic" {
   resource_group_name  = var.resource_group_name
   virtual_network_name =  azurerm_virtual_network.vnet.name
   address_prefixes     = [each.value.cidr_block]
+  
 }
 
 #nsg
 resource "azurerm_network_security_group" "dynamic" {
   for_each = var.dynamic_subnets
 
-  name                = "${each.key}-nsg"
+  name                = "${var.naming.project}-${var.naming.environment}-${each.key}-nsg"
   location            =  azurerm_virtual_network.vnet.location
   resource_group_name = var.resource_group_name
 
@@ -46,11 +49,12 @@ resource "azurerm_network_security_group" "dynamic" {
     destination_address_prefix = security_rule.value.destination_address_prefix 
   }
 }
+  tags = var.tags
 }
 
 resource "azurerm_subnet_network_security_group_association" "association" {
     for_each = var.dynamic_subnets
     subnet_id = azurerm_subnet.dynamic[each.key].id
     network_security_group_id = azurerm_network_security_group.dynamic[each.key].id
-
+    
 }

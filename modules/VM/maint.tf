@@ -1,7 +1,7 @@
 # network interface card configuration
 
 resource "azurerm_network_interface" "nic" {
-  name                = var.nic_vars.nic_name
+  name                = "${var.naming.project}-${var.naming.environment}-nic"
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -11,12 +11,13 @@ resource "azurerm_network_interface" "nic" {
     private_ip_address_allocation = var.ip_conf.allocation
     public_ip_address_id          = var.nic_vars.pub_ip_id
     }
+    tags = var.tags
 }
 
 # virtual machine configuration
 
 resource "azurerm_linux_virtual_machine" "vm" {
-  name                = var.virtual_machine_vars.name
+  name                = "${var.naming.project}-${var.naming.environment}-vm"
   resource_group_name = var.resource_group_name
   location            = var.location
   size                = var.virtual_machine_vars.size
@@ -53,16 +54,18 @@ resource "azurerm_linux_virtual_machine" "vm" {
     storage_account_uri = var.boot_diagnostics.storage_account_uri
   }
 }
+  tags = var.tags
 }
 
 resource "azurerm_managed_disk" "data" {
   for_each = var.disks
-  name                 = each.key
+  name                 = "${var.naming.project}-${var.naming.environment}-${each.key}-disk"
   location             = var.location
   resource_group_name  = var.resource_group_name
   storage_account_type = each.value.storage_account_type
   create_option        = each.value.create_option
   disk_size_gb         = each.value.disk_size_gb
+  tags = var.tags
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "disk-attachment" {
@@ -71,4 +74,5 @@ resource "azurerm_virtual_machine_data_disk_attachment" "disk-attachment" {
   virtual_machine_id = azurerm_linux_virtual_machine.vm.id
   lun                = each.value.lun
   caching            = each.value.caching
+  
 }

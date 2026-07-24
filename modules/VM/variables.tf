@@ -10,7 +10,7 @@ variable "location" {
   
 }
 variable "nic_vars" {
-      type = object({nic_name = string 
+      type = object({
       subnet_id = string
       pub_ip_id = string
       })
@@ -31,7 +31,6 @@ variable "ip_conf" {
 
 variable "virtual_machine_vars" {
    type = object({
-     name = string
      size = string
      admin_username = string
      computer_name = string
@@ -76,11 +75,20 @@ variable "boot_diagnostics" {
 
 variable "disks"  {
       type = map(object({
-        name = string
         storage_account_type = string
         create_option = string
         disk_size_gb = number
         lun = number
         caching = string
       }))
+}
+
+variable "tags" {
+  type = map(string)
+}
+variable "naming" {
+  type = object({
+    project = string
+    environment = string
+  })
 }

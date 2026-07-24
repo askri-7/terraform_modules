@@ -1,7 +1,4 @@
-variable "virtual_network_name" {
-    type = string
-    description = "Vnet name"  
-}
+
 variable "virtual_network_location" {
     type = string
     description = "Vnet location"  
@@ -43,7 +40,13 @@ variable "dynamic_subnets" {
 }
 
 
+variable "tags" {
+  type = map(string)
+}
 
-
-
-
+variable "naming" {
+  type = object({
+    project = string
+    environment = string
+  })
+}
