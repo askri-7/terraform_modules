@@ -5,5 +5,6 @@ terraform {
     container_name       = "internshipdevfrctltfstate"
     key                  = "internship-dev-frctl.tfstate"
     use_azuread_auth     = true
+     use_oidc = true
   }
 }

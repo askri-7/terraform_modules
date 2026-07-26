@@ -2,12 +2,18 @@ variable "resource_group_name" {
   type        = string
   description = "the resource group name"
 }
-/*
+
+ variable "federated_subjects" {
+   type = map(string)
+ }
+
+
+
 variable "storage_account_name" {
   type = string
 
 }
-*/
+
 # vnet vars
 
 

@@ -11,11 +11,12 @@ on:
 env:
   TF_WORKING_DIR: "environment/dev/"          
   TF_VERSION: "1.15.7"
-  TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+
 
 permissions:
   contents: read
-  pull-requests: write         # needed if you want checkov/tflint to comment on PRs
+  pull-requests: write   
+  id-token: write      # needed if you want checkov/tflint to comment on PRs
 
 jobs:
 
@@ -48,7 +49,7 @@ jobs:
           soft_fail: false        # set true if you want it to warn only, not fail the pipeline
           skip_check: CKV_AZURE_50, CKV_AZURE_93 , CKV_AZURE_160 # configure redirection later in ngnix
 
-      # --- TFLint: Terraform linting ---s
+      # --- TFLint: Terraform linting ---
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
         with:
@@ -79,15 +80,14 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-      # service pricipale needed / subscription access needed
-      # If using remote state on AWS/Azure/GCP, configure credentials here, e.g.:
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: us-east-1
-
+     
+      - name: Azure Login using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+     
       - name: Terraform Init
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform init -input=false
@@ -98,6 +98,8 @@ jobs:
 
       - name: Terraform Plan
         id: plan
+        env:
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform plan -input=false -out=tfplan
 
@@ -125,7 +127,14 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-
+     
+      - name: Azure Login using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    
       - name: Terraform Init
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform init -input=false
@@ -137,5 +146,7 @@ jobs:
           path: ${{ env.TF_WORKING_DIR }}
 
       - name: Terraform Apply
+        env:
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform apply -input=false -auto-approve tfplan
