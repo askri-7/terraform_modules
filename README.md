@@ -16,7 +16,7 @@
 │   
 ├── modules/                 # Reusable Terraform building blocks
 │   ├── RG/                  # Resource Group module
-    ├ workflow_identity      # the github action identity         
+    ├── workflow_identity      # the github action identity         
 │   ├── VM/                  # Virtual Machine module
     ├──  public_ip/          # public ip generator
 │   └── Vnet/                # Virtual Network module
