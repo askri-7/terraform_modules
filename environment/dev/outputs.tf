@@ -8,11 +8,8 @@ output "subnet_ids" {
   value       = module.vnet.subnet_ids
 }
 
-# Public IPs
-output "public_ip_ids" {
-  description = "Map of Public IP IDs"
-  value       = module.public_ip.public_ip_ids
-}
+# Public IP
+
 
 output "public_ip_addresses" {
   description = "Map of Public IP addresses"
@@ -23,28 +20,21 @@ output "public_ip_addresses" {
 # VM
 
 
-output "vm_id" {
-  description = "Virtual Machine ID"
-  value       = module.vm.vm_id
-}
+
 
 output "vm_name" {
   description = "Virtual Machine name"
-  value       = module.vm.vm_name
+  value       = {for name , vm in module.vm : name => vm.vm_name}
 }
 
-output "network_interface_id" {
-  description = "Network Interface ID"
-  value       = module.vm.nic_id
-}
+
 
 output "private_ip_address" {
   description = "private IP address of the VM"
-  value       = module.vm.private_ip_address
+  value       = { for key , vm in module.vm    : key  =>vm.private_ip_address}
 }
 
 
-# Helper output
 
 
 

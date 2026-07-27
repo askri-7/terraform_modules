@@ -52,25 +52,33 @@ module "public_ip" {
   naming              = var.naming
   tags                = var.tags
 }
-module "vm" {
-  source = "../../modules/VM"
 
+
+module "vm" {
+  source   = "../../modules/VM"
+  for_each = local.vm_roles
+  vm-name = "${var.naming.project}-${var.naming.environment}-${each.key}-vm"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.rg.name
   ssh_public_key      = var.ssh_public_key
-
+  
+  ### custum config
+  cloud_init = filebase64("../../cloud-init/${each.key}.yml")
+  
+  ###  nic 
+  nic-name = "${var.naming.project}-${var.naming.environment}-${each.key}-nic"
   nic_vars = {
-    subnet_id = module.vnet.subnet_ids["frontend"]
-    pub_ip_id = module.public_ip.public_ip_ids["frontend"]
+    subnet_id = module.vnet.subnet_ids[each.value.subnet_key]
+    pub_ip_id = each.value.has_public_ip ? module.public_ip.public_ip_ids[each.key] : null
   }
 
   ip_conf              = var.ip_conf
-  virtual_machine_vars = var.virtual_machine_vars
-  os_disk              = var.os_disk
+  virtual_machine_vars = var.virtual_machine_vars[each.key]
+  os_disk_name = "${each.key}-osdisk"
+  os_disk              = var.os_disk[each.key]
   source_image         = var.source_image
   boot_diagnostics     = var.boot_diagnostics
-  disks                = var.disks
+  disks                = var.disks[each.key]
   naming               = var.naming
   tags                 = var.tags
 }
-

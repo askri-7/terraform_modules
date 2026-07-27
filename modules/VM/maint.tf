@@ -1,7 +1,7 @@
 # network interface card configuration
 
 resource "azurerm_network_interface" "nic" {
-  name                = "${var.naming.project}-${var.naming.environment}-nic"
+  name                = var.nic-name
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -17,7 +17,7 @@ resource "azurerm_network_interface" "nic" {
 # virtual machine configuration
 # skip CKV_AZURE_50 virtual machine extension
 resource "azurerm_linux_virtual_machine" "vm" {
-  name                = "${var.naming.project}-${var.naming.environment}-vm"
+  name                = var.vm-name
   resource_group_name = var.resource_group_name
   location            = var.location
   size                = var.virtual_machine_vars.size
@@ -26,7 +26,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   network_interface_ids = [
     azurerm_network_interface.nic.id
   ]
-
+  custom_data = var.cloud_init
   # Authentification  public ssh key as input 
   admin_ssh_key {
     username   = var.virtual_machine_vars.admin_username
@@ -34,7 +34,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
   # managed disk ( os + instaled programs )
   os_disk {
-    name                 = var.os_disk.name
+    name                 = var.os_disk_name
     caching              = var.os_disk.caching
     storage_account_type = var.os_disk.storage_account_type
   }

@@ -9,10 +9,13 @@ variable "location" {
   description = "location of both nic + vm"
 
 }
+variable "nic-name" {
+   type = string
+}
 variable "nic_vars" {
   type = object({
     subnet_id = string
-    pub_ip_id = string
+    pub_ip_id = optional(string, null)
   })
 }
 
@@ -36,9 +39,13 @@ variable "virtual_machine_vars" {
     computer_name  = string
   })
 }
+variable "os_disk_name" {
+  type = string
+  
+}
 variable "os_disk" {
   type = object({
-    name                 = string
+    
     caching              = string
     storage_account_type = string
 
@@ -83,7 +90,9 @@ variable "disks" {
     public_network_access_enabled = bool
   }))
 }
-
+variable "vm-name" {
+  type = string
+}
 variable "tags" {
   type = map(string)
 }
@@ -91,5 +100,12 @@ variable "naming" {
   type = object({
     project     = string
     environment = string
+  
   })
+}
+
+variable "cloud_init" {
+  type        = string
+  default     = null
+  description = "Base64-encoded cloud-init data"
 }
