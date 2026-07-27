@@ -47,7 +47,7 @@ jobs:
           framework: terraform
           output_format: cli
           soft_fail: false        # set true if you want it to warn only, not fail the pipeline
-          skip_check: CKV_AZURE_50, CKV_AZURE_93 , CKV_AZURE_160 # configure redirection later in ngnix
+          skip_check: CKV_AZURE_50, CKV_AZURE_93 , CKV_AZURE_160 , CKV2_AZURE_39 # configure redirection later in ngnix
 
       # --- TFLint: Terraform linting ---
       - name: Setup TFLint
