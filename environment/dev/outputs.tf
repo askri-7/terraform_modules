@@ -19,19 +19,21 @@ output "public_ip_addresses" {
 
 # VM
 
-
+output "github_client_id" {
+  value = module.github_actions_identity.client_id
+}
 
 
 output "vm_name" {
   description = "Virtual Machine name"
-  value       = {for name , vm in module.vm : name => vm.vm_name}
+  value       = module.vm.vm_name
 }
 
 
 
 output "private_ip_address" {
   description = "private IP address of the VM"
-  value       = { for key , vm in module.vm    : key  =>vm.private_ip_address}
+  value       = module.vm.private_ip_address
 }
 
 

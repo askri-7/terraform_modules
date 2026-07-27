@@ -4,7 +4,6 @@ variable "resource_group_name" {
 # key is the public ip name
 variable "pub_ips" {
   type = map(object({
-    public_ip_location = string
     allocation         = string
     sku                = string
   }))
@@ -14,10 +13,10 @@ variable "pub_ips" {
 variable "tags" {
   type = map(string)
 }
-variable "naming" {
-  type = object({
-    project     = string
-    environment = string
 
-  })
+variable "pip_name" {
+  type = string
+}
+variable "location" {
+  type = string
 }

@@ -39,13 +39,10 @@ variable "virtual_machine_vars" {
     computer_name  = string
   })
 }
-variable "os_disk_name" {
-  type = string
-  
-}
+
 variable "os_disk" {
   type = object({
-    
+    name                 = string 
     caching              = string
     storage_account_type = string
 

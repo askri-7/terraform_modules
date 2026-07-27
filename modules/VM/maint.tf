@@ -34,7 +34,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
   # managed disk ( os + instaled programs )
   os_disk {
-    name                 = var.os_disk_name
+    name                 = var.os_disk.name
     caching              = var.os_disk.caching
     storage_account_type = var.os_disk.storage_account_type
   }
@@ -59,7 +59,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
 # skip CKV_AZURE_93 use the default azure key encryption 
 resource "azurerm_managed_disk" "data" {
   for_each                      = var.disks
-  name                          = "${var.naming.project}-${var.naming.environment}-${each.key}-disk"
+  name                          = "${each.key}-disk"
   location                      = var.location
   resource_group_name           = var.resource_group_name
   storage_account_type          = each.value.storage_account_type

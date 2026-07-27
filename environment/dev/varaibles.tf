@@ -82,19 +82,19 @@ variable "ip_conf" {
 }
 
 variable "virtual_machine_vars" {
-  type =map( object({
+  type = object({
     size           = string
     admin_username = string
     computer_name  = string
-  }))
+  })
 }
 variable "os_disk" {
-  type = map( object({
-   
+  type = object({
+    name = string
     caching              = string
     storage_account_type = string
 
-  }))
+  })
   description = "os_disk configuration"
 }
 
@@ -127,14 +127,15 @@ variable "ssh_public_key" {
 }
 
 variable "disks" {
-  type =map( map(object({
+  type =map(object({
+  
     storage_account_type          = string
     create_option                 = string
     disk_size_gb                  = number
     lun                           = number
     caching                       = string
     public_network_access_enabled = bool
-  })))
+  }))
 }
 variable "tags" {
   type = map(string)
@@ -146,6 +147,9 @@ variable "naming" {
     environment = string
 
   })
+}
+variable "cloud_init_path" {
+  type = string
 }
 
 
