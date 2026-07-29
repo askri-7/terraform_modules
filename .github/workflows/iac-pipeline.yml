@@ -119,7 +119,7 @@ jobs:
     needs: terraform-plan
     environment:
       name: dev        # <-- this environment must have "required reviewers" set in repo settings
-    steps:             # no required reviewers set yet /public repo needed
+    steps:             # no required reviewers set yet /public repo
       - name: Checkout code
         uses: actions/checkout@v4
 
