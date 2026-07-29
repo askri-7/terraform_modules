@@ -5,13 +5,7 @@ variable "location" {
 variable "tags" {
   type = map(string)
 }
-variable "naming" {
-  type = object({
-    project     = string
-    environment = string
 
-  })
-}
 variable "resource_group_name" {
   type = string
 }
@@ -31,4 +25,8 @@ variable "resource_group_name" {
        role_name = string
        scope = string
    }))
+ }
+
+ variable "identity_name" {
+   type = string
  }

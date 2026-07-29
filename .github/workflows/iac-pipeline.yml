@@ -3,9 +3,9 @@ name: Terraform CI/CD Pipeline
 
 on:
   push:
-    branches: [test]
+    branches: [release/3vm]
   pull_request:
-    branches: [test]
+    branches: [release/3vm]
   workflow_dispatch:
 
 env:

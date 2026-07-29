@@ -12,8 +12,7 @@ output "subnet_ids" {
 
 
 output "public_ip_addresses" {
-  description = "Map of Public IP addresses"
-  value       = module.public_ip.public_ip_addresses
+  value = { for k, m in module.public_ip : k => m.public_ip_addresses }
 }
 
 

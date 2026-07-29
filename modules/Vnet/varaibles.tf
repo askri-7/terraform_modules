@@ -38,15 +38,11 @@ variable "dynamic_subnets" {
   }))
   description = "map of dynamic subnets security rule block as dynamic var"
 }
-
+variable "vnet_name" {
+  type = string
+}
 
 variable "tags" {
   type = map(string)
 }
 
-variable "naming" {
-  type = object({
-    project     = string
-    environment = string
-  })
-}

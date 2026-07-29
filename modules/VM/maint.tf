@@ -1,7 +1,7 @@
 # network interface card configuration
 
 resource "azurerm_network_interface" "nic" {
-  name                = var.nic-name
+  name                = "${var.vm_name}-nic"
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -17,24 +17,24 @@ resource "azurerm_network_interface" "nic" {
 # virtual machine configuration
 # skip CKV_AZURE_50 virtual machine extension
 resource "azurerm_linux_virtual_machine" "vm" {
-  name                = var.vm-name
+  name                = var.vm_name
   resource_group_name = var.resource_group_name
   location            = var.location
-  size                = var.virtual_machine_vars.size
-  admin_username      = var.virtual_machine_vars.admin_username
-  computer_name       = var.virtual_machine_vars.computer_name
+  size                = var.vm_metadata.size
+  admin_username      = var.vm_metadata.admin_username
+  computer_name       = var.vm_metadata.computer_name
   network_interface_ids = [
     azurerm_network_interface.nic.id
   ]
   custom_data = var.cloud_init
   # Authentification  public ssh key as input 
   admin_ssh_key {
-    username   = var.virtual_machine_vars.admin_username
+    username   = var.vm_metadata.admin_username
     public_key = var.ssh_public_key
   }
   # managed disk ( os + instaled programs )
   os_disk {
-    name                 = var.os_disk_name
+    name                 = "${var.vm_name}-osdisk"
     caching              = var.os_disk.caching
     storage_account_type = var.os_disk.storage_account_type
   }
@@ -59,7 +59,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
 # skip CKV_AZURE_93 use the default azure key encryption 
 resource "azurerm_managed_disk" "data" {
   for_each                      = var.disks
-  name                          = "${var.naming.project}-${var.naming.environment}-${each.key}-disk"
+  name                          = "${var.vm_name}-disk"
   location                      = var.location
   resource_group_name           = var.resource_group_name
   storage_account_type          = each.value.storage_account_type
