@@ -144,4 +144,4 @@ tags = {
   "owner"       = "tmtrack"
   costcenter    = "internshsip"
 }
-cloud_init_path = "../../cloud-init/webapp.yml"
+cloud_init_path = "../../cloud-init/webapp.sh"
