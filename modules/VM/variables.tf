@@ -9,9 +9,7 @@ variable "location" {
   description = "location of both nic + vm"
 
 }
-variable "nic-name" {
-   type = string
-}
+
 variable "nic_vars" {
   type = object({
     subnet_id = string
@@ -87,19 +85,13 @@ variable "disks" {
     public_network_access_enabled = bool
   }))
 }
-variable "vm-name" {
+variable "vm_name" {
   type = string
 }
 variable "tags" {
   type = map(string)
 }
-variable "naming" {
-  type = object({
-    project     = string
-    environment = string
-  
-  })
-}
+
 
 variable "cloud_init" {
   type        = string

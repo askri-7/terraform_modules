@@ -12,6 +12,7 @@ data "azurerm_storage_account" "sta" {
 
 module "github_actions_identity" {
   source              = "../../modules/workflow_identity"
+  identiry_name = "${var.naming.project}-${var.naming.environment}-workflow-identity"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.rg.name
   role_assignments = {
@@ -30,18 +31,17 @@ module "github_actions_identity" {
   audience_name       = local.default_audience_name
   issuer_url          = local.github_issuer_url
   federated_subjects  = var.federated_subjects
-  naming              = var.naming
   tags                = var.tags
 }
 
 module "vnet" {
   source                   = "../../modules/Vnet"
   resource_group_name      = data.azurerm_resource_group.rg.name
+  vnet_name = "${var.naming.project}-${var.naming.environment}-vnet"
   virtual_network_location = var.location
   address_space            = var.address_space
   ddos_protection_plan     = var.ddos_protection_plan
   dynamic_subnets          = var.dynamic_subnets
-  naming                   = var.naming
   tags                     = var.tags
 }
 
@@ -50,7 +50,7 @@ module "public_ip" {
   resource_group_name = data.azurerm_resource_group.rg.name
   pip_name            = "${var.naming.project}-${var.naming.environment}-webapp-pip"
   location = var.location
-  pub_ips             = var.pub_ips
+  pub_ips             = var.pub_ips # map of public ip
   tags                = var.tags
 }
 
@@ -60,7 +60,7 @@ module "public_ip" {
 module "vm" {
   source   = "../../modules/VM"
 
-  vm-name = "${var.naming.project}-${var.naming.environment}-vm"
+  vm_name = "${var.naming.project}-${var.naming.environment}-vm"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.rg.name
   ssh_public_key      = var.ssh_public_key
@@ -69,7 +69,7 @@ module "vm" {
   cloud_init = filebase64(var.cloud_init_path)
   
   ###  nic 
-  nic-name = "${var.naming.project}-${var.naming.environment}-nic"
+
   nic_vars = {
     subnet_id = module.vnet.subnet_ids["webapp"]
     pub_ip_id = module.public_ip.public_ip_ids["webapp"]
@@ -82,6 +82,5 @@ module "vm" {
   os_disk              = var.os_disk
   boot_diagnostics     = var.boot_diagnostics
   disks                = var.disks
-  naming               = var.naming
   tags                 = var.tags
 }

@@ -11,7 +11,9 @@ naming = {
 
 
 federated_subjects = {
-  dev = "repo:askri-7/terraform_modules:ref:refs/heads/test"
+  onpush = "repo:askri-7/terraform_modules:ref:refs/heads/release/1vm"
+  onpullR ="repo:askri-7/terraform_modules:pull_request"
+  onapply ="repo:askri-7/terraform_modules:environment:dev"
 }
 # Virtual network
 

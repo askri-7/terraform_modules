@@ -1,6 +1,6 @@
 resource "azurerm_user_assigned_identity" "msi" {
   location = var.location
-  name = "${var.naming.project}-${var.naming.environment}-identity"
+  name = var.identiry_name
   resource_group_name = var.resource_group_name
   tags = var.tags
 }
@@ -17,7 +17,7 @@ resource "azurerm_federated_identity_credential" "cred" {
   name = each.key
   resource_group_name = var.resource_group_name
   audience = [ var.audience_name ]
-  issuer = var.issuer_url
+  issuer = var.issuer_url 
   parent_id = azurerm_user_assigned_identity.msi.id
   subject = each.value
 }

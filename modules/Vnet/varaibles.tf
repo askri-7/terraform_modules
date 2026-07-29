@@ -44,9 +44,7 @@ variable "tags" {
   type = map(string)
 }
 
-variable "naming" {
-  type = object({
-    project     = string
-    environment = string
-  })
+variable "vnet_name" {
+  type = string
 }
+

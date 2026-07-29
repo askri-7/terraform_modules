@@ -1,6 +1,6 @@
 # make a vnet with ddos var plan
 resource "azurerm_virtual_network" "vnet" {
-  name                = "${var.naming.project}-${var.naming.environment}-vnet"
+  name                = var.vnet_name
   location            = var.virtual_network_location
   resource_group_name = var.resource_group_name
   address_space       = var.address_space # private ip adress range
@@ -31,7 +31,7 @@ resource "azurerm_subnet" "dynamic" {
 resource "azurerm_network_security_group" "dynamic" {
   for_each = var.dynamic_subnets
 
-  name                = "${var.naming.project}-${var.naming.environment}-${each.key}-nsg"
+  name                =  "${var.vnet_name}-${each.key}-nsg"
   location            = azurerm_virtual_network.vnet.location
   resource_group_name = var.resource_group_name
   #skip CKV_AZURE_160 allow http on 80 to redirect later

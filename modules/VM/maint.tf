@@ -1,7 +1,7 @@
 # network interface card configuration
 
 resource "azurerm_network_interface" "nic" {
-  name                = var.nic-name
+  name                =  "${var.vm_name}-nic"
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -17,7 +17,7 @@ resource "azurerm_network_interface" "nic" {
 # virtual machine configuration
 # skip CKV_AZURE_50 virtual machine extension
 resource "azurerm_linux_virtual_machine" "vm" {
-  name                = var.vm-name
+  name                = var.vm_name
   resource_group_name = var.resource_group_name
   location            = var.location
   size                = var.virtual_machine_vars.size
@@ -59,7 +59,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
 # skip CKV_AZURE_93 use the default azure key encryption 
 resource "azurerm_managed_disk" "data" {
   for_each                      = var.disks
-  name                          = "${each.key}-disk"
+  name                          = "${var.vm_name}-${each.key}-disk"
   location                      = var.location
   resource_group_name           = var.resource_group_name
   storage_account_type          = each.value.storage_account_type
