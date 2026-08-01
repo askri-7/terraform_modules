@@ -3,9 +3,9 @@ variable "resource_group_name" {
   description = "the resource group name"
 }
 
- variable "federated_subjects" {
-   type = map(string)
- }
+variable "federated_subjects" {
+  type = map(string)
+}
 
 
 
@@ -127,8 +127,8 @@ variable "ssh_public_key" {
 }
 
 variable "disks" {
-  type =map(object({
-  
+  type = map(object({
+
     storage_account_type          = string
     create_option                 = string
     disk_size_gb                  = number

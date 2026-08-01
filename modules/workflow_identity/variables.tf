@@ -26,6 +26,6 @@ variable "resource_group_name" {
        scope = string
    }))
  }
- variable "identiry_name" {
+ variable "identity_name" {
    type = string
  }

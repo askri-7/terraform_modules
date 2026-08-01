@@ -12,7 +12,7 @@ data "azurerm_storage_account" "sta" {
 
 module "github_actions_identity" {
   source              = "../../modules/workflow_identity"
-  identiry_name = "${var.naming.project}-${var.naming.environment}-workflow-identity"
+  identity_name = "${var.naming.project}-${var.naming.environment}-workflow-identity"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.rg.name
   role_assignments = {
@@ -49,11 +49,10 @@ module "public_ip" {
   source              = "../../modules/public_ip"
   resource_group_name = data.azurerm_resource_group.rg.name
   pip_name            = "${var.naming.project}-${var.naming.environment}-webapp-pip"
-  location = var.location
+  location            = var.location
   pub_ips             = var.pub_ips # map of public ip
   tags                = var.tags
 }
-
 
 #### one vm one cloud init one host server
 

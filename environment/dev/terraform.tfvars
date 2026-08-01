@@ -1,9 +1,9 @@
 
 # Global
 
-resource_group_name = "isra-rg-01"
+resource_group_name  = "isra-rg-01"
 storage_account_name = "terrafstorageaccount01"
-location = "FranceCentral"
+location             = "FranceCentral"
 naming = {
   environment = "dev"
   project     = "internship-web"
@@ -11,9 +11,9 @@ naming = {
 
 
 federated_subjects = {
-  onpush = "repo:askri-7/terraform_modules:ref:refs/heads/release/1vm"
-  onpullR ="repo:askri-7/terraform_modules:pull_request"
-  onapply ="repo:askri-7/terraform_modules:environment:dev"
+  onpush  = "repo:askri-7/terraform_modules:ref:refs/heads/release/1vm"
+  onpullR = "repo:askri-7/terraform_modules:pull_request"
+  onapply = "repo:askri-7/terraform_modules:environment:dev"
 }
 # Virtual network
 
@@ -92,17 +92,17 @@ ip_conf = {
 
 
 virtual_machine_vars = {
-  
+
   size           = "Standard_B2s_v2"
   admin_username = "evil"
   computer_name  = "webapp"
 }
-  
+
 # OS Disk
 
 
 os_disk = {
-  name                 = "osdisk"
+  
   caching              = "ReadWrite"
   storage_account_type = "Premium_LRS"
 
@@ -128,7 +128,7 @@ boot_diagnostics = {
 # disks
 
 disks = {
- data = {
+  data = {
     storage_account_type          = "Standard_LRS"
     create_option                 = "Empty"
     disk_size_gb                  = 64
@@ -136,8 +136,8 @@ disks = {
     caching                       = "ReadWrite"
     public_network_access_enabled = false
   }
-  }
-  
+}
+
 
 tags = {
   "environment" = "dev"

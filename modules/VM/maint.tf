@@ -34,7 +34,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
   # managed disk ( os + instaled programs )
   os_disk {
-    name                 = var.os_disk.name
+    name                 = "${var.vm_name}-osdisk"
     caching              = var.os_disk.caching
     storage_account_type = var.os_disk.storage_account_type
   }
