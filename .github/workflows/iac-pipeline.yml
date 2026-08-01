@@ -3,9 +3,9 @@ name: Terraform CI/CD Pipeline
 
 on:
   push:
-    branches: [release/3vm]
+    branches: [release/multi-vm]
   pull_request:
-    branches: [release/3vm]
+    branches: [release/multi-vm]
   workflow_dispatch:
 
 env:
@@ -84,7 +84,7 @@ jobs:
       - name: Azure Login using OIDC
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID_V2 }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
      
@@ -131,7 +131,7 @@ jobs:
       - name: Azure Login using OIDC
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID_V2 }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
     

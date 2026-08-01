@@ -24,6 +24,26 @@ resource "azurerm_subnet" "dynamic" {
   resource_group_name  = var.resource_group_name
   virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = [each.value.cidr_block]
+ 
+  dynamic "delegation" {
+
+    for_each = each.value.delegation != null ? [each.value.delegation] : []
+
+
+    content {
+
+      name = delegation.value.name
+
+
+      service_delegation {
+
+        name = delegation.value.service_name
+
+        actions = delegation.value.actions
+
+      }
+    }
+  }
 
 }
 

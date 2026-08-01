@@ -9,7 +9,7 @@ naming = {
 }
 
 federated_subjects = {
-  onpush  = "repo:askri-7/terraform_modules:ref:refs/heads/release/3vm"
+  onpush  = "repo:askri-7/terraform_modules:ref:refs/heads/release/multi-vm"
   onpullR = "repo:askri-7/terraform_modules:pull_request"
   onapply = "repo:askri-7/terraform_modules:environment:dev"
 }
@@ -89,45 +89,34 @@ dynamic_subnets = {
       }
     ]
   }
+   database = {
+  cidr_block = "10.0.3.0/24"
 
-  database = {
-    cidr_block = "10.0.3.0/24"
-    security_rules = [
-      {
-        name                        = "Allow-DB-From-Backend"
-        priority                    = 100
-        direction                   = "Inbound"
-        access                      = "Allow"
-        protocol                    = "Tcp"
-        source_port_range           = "*"
-        destination_port_range      = "5432"           # e.g. postgres; add another rule for redis 6379 if needed
-        source_address_prefix       = "10.0.2.0/24"     # only from backend subnet
-        destination_address_prefix  = "*"
-      },
-      {
-        name                        = "Allow-Redis-From-Backend"
-        priority                    = 110
-        direction                   = "Inbound"
-        access                      = "Allow"
-        protocol                    = "Tcp"
-        source_port_range           = "*"
-        destination_port_range      = "6379"
-        source_address_prefix       = "10.0.2.0/24"
-        destination_address_prefix  = "*"
-      },
-      {
-        name                        = "Allow-SSH-Internal"
-        priority                    = 120
-        direction                   = "Inbound"
-        access                      = "Allow"
-        protocol                    = "Tcp"
-        source_port_range           = "*"
-        destination_port_range      = "22"
-        source_address_prefix       = "10.0.0.0/16"
-        destination_address_prefix  = "*"
-      }
+  delegation = {
+    name = "postgres-flexible-server"
+
+    service_name = "Microsoft.DBforPostgreSQL/flexibleServers"
+
+    actions = [
+      "Microsoft.Network/virtualNetworks/subnets/join/action"
     ]
   }
+
+  security_rules = [
+    {
+      name                       = "Allow-Postgres-From-Backend"
+      priority                   = 100
+      direction                  = "Inbound"
+      access                     = "Allow"
+      protocol                   = "Tcp"
+      source_port_range          = "*"
+      destination_port_range     = "5432"
+      source_address_prefix      = "10.0.2.0/24"
+      destination_address_prefix = "*"
+    }
+  ]
+}
+  
 }
 
 
@@ -203,43 +192,16 @@ virtual_machines = {
     }
     disks = {}
   }
-
-  database = {
-    subnet_key    = "database"
-    has_public_ip = false
-    public_ip     = null
-    source_image = {
-      publisher = "Canonical"
-      offer     = "0001-com-ubuntu-server-jammy"
-      sku       = "22_04-lts-gen2"
-      version   = "latest"
-    }
-    boot_diagnostics = {
-      enabled             = false
-      storage_account_uri = null
-    }
-    vm_metadata = {
-      size           = "Standard_B2s_v2"
-      admin_username = "evil"
-      computer_name  = "database"
-    }
-    ip_conf = {
-      name       = "ipconfig1"
-      allocation = "Dynamic"
-    }
-    os_disk = {
-      caching              = "ReadWrite"
-      storage_account_type = "Premium_LRS"
-    }
-    disks = {
-      data = {
-        storage_account_type          = "Standard_LRS"
-        create_option                 = "Empty"
-        disk_size_gb                  = 64
-        lun                           = 0
-        caching                       = "ReadWrite"
-        public_network_access_enabled = false
-      }
-    }
-  }
+ 
 }
+
+postgresql_metadata = {
+  version             = "16"
+  zone = "1"
+
+  storage_mb   = 32768
+  storage_tier = "P4"
+
+  sku_name = "B_Standard_B1ms"
+}
+private_dns = "postgres.database.azure.com"

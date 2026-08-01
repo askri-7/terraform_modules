@@ -26,7 +26,14 @@ variable "ddos_protection_plan" {
 
 variable "dynamic_subnets" {
   type = map(object({ cidr_block = string
-    security_rules = list(object({ name = string
+   
+    delegation = optional(object({
+      name          = string
+      service_name  = string
+      actions       = list(string)
+    }), null)
+     security_rules = list(object({ 
+      name = string
       priority               = number
       direction              = string
       access                 = string
