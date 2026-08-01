@@ -40,7 +40,6 @@ variable "virtual_machine_vars" {
 
 variable "os_disk" {
   type = object({
-    
     caching              = string
     storage_account_type = string
 
