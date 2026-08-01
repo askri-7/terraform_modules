@@ -100,8 +100,8 @@ jobs:
         id: plan
         env:
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
-          TF_VAR_postgresql_administrator_password: ${{ secrets.POSTGRESQL_ADMIN_PASSWORD }}
-          TF_VAR_postgresql_administrator_login: ${{ secrets.POSTGRESQL_ADMIN_LOGIN }}
+          TF_VAR_postgresql_administrator_password: ${{ secrets.POSTGRESQL_ADMINISTRATOR_PASSWORD }}
+          TF_VAR_postgresql_administrator_login: ${{ secrets.POSTGRESQL_ADMINISTRATOR_LOGIN }}
           
 
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -152,7 +152,7 @@ jobs:
       - name: Terraform Apply
         env:
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
-          TF_VAR_postgresql_administrator_password: ${{ secrets.POSTGRESQL_ADMIN_PASSWORD }}
-          TF_VAR_postgresql_administrator_login: ${{ secrets.POSTGRESQL_ADMIN_LOGIN }}
+          TF_VAR_postgresql_administrator_password: ${{ secrets.POSTGRESQL_ADMINISTRATOR_PASSWORD }}
+          TF_VAR_postgresql_administrator_login: ${{ secrets.POSTGRESQL_ADMININSTRATOR_LOGIN }}
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform apply -input=false -auto-approve tfplan
