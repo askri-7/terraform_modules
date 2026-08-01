@@ -7,6 +7,7 @@
 ```
 .
 ├── documentation/          # Architecture docs
+├── app /                   # secure login system demo
 ├── environment/            # Root configs per environment (calls modules)
 │   ├── dev/
     ├── qa/
@@ -18,7 +19,7 @@
 │   ├── RG/                  # Resource Group module
     ├── workflow_identity      # the github action identity         
 │   ├── VM/                  # Virtual Machine module
-    ├──  public_ip/          # public ip generator
+    ├── public_ip/          # public ip generator
 │   └── Vnet/                # Virtual Network module
 └── README.md
 ```
