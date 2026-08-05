@@ -23,5 +23,5 @@
 │   └── Vnet/                # Virtual Network module
 └── README.md
 ```
-## infrastructure architecture : monotholic application
+## Infrastructure architecture : monolithic application
 ![ ](assets/monotholic.png)
