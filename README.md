@@ -23,6 +23,6 @@
 └── README.md
 ```
 
-# Infrastructure architecture : Azure multi-tier web application
+## Infrastructure architecture : Azure multi-tier web application
 
 ![](assets/infra.png)
