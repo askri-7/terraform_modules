@@ -5,6 +5,6 @@ terraform {
     container_name       = "internshipdevmultivmtfstate"
     key                  = "internship-dev-multi-vm.tfstate"
     use_azuread_auth     = true
-     use_oidc = true
+    use_oidc             = true
   }
 }

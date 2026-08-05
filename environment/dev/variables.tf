@@ -1,11 +1,11 @@
 variable "resource_group_name" {
-  type        = string
- 
+  type = string
+
 }
 
- variable "federated_subjects" {
-   type = map(string)
- }
+variable "federated_subjects" {
+  type = map(string)
+}
 
 
 
@@ -36,13 +36,13 @@ variable "ddos_protection_plan" {
 
 variable "dynamic_subnets" {
   type = map(object({ cidr_block = string
-    
+
     delegation = optional(object({
-      name          = string
-      service_name  = string
-      actions       = list(string)
+      name         = string
+      service_name = string
+      actions      = list(string)
     }), null)
-    
+
     security_rules = list(object({ name = string
       priority               = number
       direction              = string
@@ -64,7 +64,7 @@ variable "location" {
 
 }
 variable "ssh_public_key" {
-  type = string
+  type        = string
   description = "secret"
 }
 
@@ -124,30 +124,30 @@ variable "virtual_machines" {
 }
 
 variable "postgresql_administrator_password" {
-  type = string
+  type      = string
   sensitive = true
 }
 
 variable "postgresql_administrator_login" {
-  type = string
+  type      = string
   sensitive = true
 }
 variable "postgresql_metadata" {
   description = "PostgreSQL Flexible Server configuration"
 
   type = object({
-    version               = string
-    zone                  = string
-    storage_mb            = number
-    storage_tier          = string
-    sku_name              = string
+    version      = string
+    zone         = string
+    storage_mb   = number
+    storage_tier = string
+    sku_name     = string
   })
 
   sensitive = true
 }
 
 variable "private_dns" {
-  type        = string
+  type = string
 }
 
 

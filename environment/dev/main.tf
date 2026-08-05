@@ -13,25 +13,25 @@ data "azurerm_storage_account" "sta" {
 module "github_actions_identity" {
   source              = "../../modules/workflow_identity"
   location            = var.location
-  identity_name = "${var.naming.project}-${var.naming.environment}-identity-v2"
+  identity_name       = "${var.naming.project}-${var.naming.environment}-identity-v2"
   resource_group_name = data.azurerm_resource_group.rg.name
   role_assignments = {
 
-  deployment = {
-    role_name  = "Contributor"
-    scope = data.azurerm_resource_group.rg.id
-  }
+    deployment = {
+      role_name = "Contributor"
+      scope     = data.azurerm_resource_group.rg.id
+    }
 
-  terraform_state = {
-    role_name  = "Storage Blob Data Contributor"
-    scope = data.azurerm_storage_account.sta.id
-  }
+    terraform_state = {
+      role_name = "Storage Blob Data Contributor"
+      scope     = data.azurerm_storage_account.sta.id
+    }
 
-}
-  audience_name       = local.default_audience_name
-  issuer_url          = local.github_issuer_url
-  federated_subjects  = var.federated_subjects
-  tags                = var.tags
+  }
+  audience_name      = local.default_audience_name
+  issuer_url         = local.github_issuer_url
+  federated_subjects = var.federated_subjects
+  tags               = var.tags
 }
 
 module "vnet" {
@@ -46,29 +46,29 @@ module "vnet" {
 }
 
 module "postgresql_server" {
-  source = "../../modules/postgres-server"
-  resource_group_name = data.azurerm_resource_group.rg.name
-  postgresql_name = "${var.naming.project}-${var.naming.environment}-postgres"
-  location = var.location
-  private_dns = "${var.naming.project}-${var.naming.environment}-${var.private_dns}"
-  virtual_network_id = module.vnet.vnet_id
-  delegated_subnet_id = module.vnet.subnet_ids["database"]
-  postgresql_metadata = var.postgresql_metadata
-  postgresql_administrator_login = var.postgresql_administrator_login
+  source                            = "../../modules/postgres-server"
+  resource_group_name               = data.azurerm_resource_group.rg.name
+  postgresql_name                   = "${var.naming.project}-${var.naming.environment}-postgres"
+  location                          = var.location
+  private_dns                       = "${var.naming.project}-${var.naming.environment}-${var.private_dns}"
+  virtual_network_id                = module.vnet.vnet_id
+  delegated_subnet_id               = module.vnet.subnet_ids["database"]
+  postgresql_metadata               = var.postgresql_metadata
+  postgresql_administrator_login    = var.postgresql_administrator_login
   postgresql_administrator_password = var.postgresql_administrator_password
 }
 
 module "public_ip" {
   for_each = {
-  for k, v in var.virtual_machines : k => v
-  if v.has_public_ip
-}
+    for k, v in var.virtual_machines : k => v
+    if v.has_public_ip
+  }
   source              = "../../modules/public_ip"
   resource_group_name = data.azurerm_resource_group.rg.name
-  pip_name =  "${var.naming.project}-${var.naming.environment}-${each.key}-pip-v2"
-  location = var.location
-  pip_allocation = each.value.public_ip.allocation
-  pip_sku = each.value.public_ip.sku
+  pip_name            = "${var.naming.project}-${var.naming.environment}-${each.key}-pip-v2"
+  location            = var.location
+  pip_allocation      = each.value.public_ip.allocation
+  pip_sku             = each.value.public_ip.sku
   tags                = var.tags
 }
 
@@ -86,7 +86,7 @@ module "vm" {
 
   nic_vars = {
     subnet_id = module.vnet.subnet_ids[each.value.subnet_key]
-   pub_ip_id = each.value.has_public_ip ? module.public_ip[each.key].id : null
+    pub_ip_id = each.value.has_public_ip ? module.public_ip[each.key].id : null
   }
 
   ip_conf          = each.value.ip_conf

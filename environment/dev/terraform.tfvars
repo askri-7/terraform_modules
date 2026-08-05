@@ -1,7 +1,7 @@
 # Global
 resource_group_name  = "isra-rg-01"
 storage_account_name = "terrafstorageaccount01"
-location              = "FranceCentral"
+location             = "FranceCentral"
 
 naming = {
   environment = "dev"
@@ -27,37 +27,37 @@ dynamic_subnets = {
     cidr_block = "10.0.1.0/24"
     security_rules = [
       {
-        name                        = "Allow-HTTP"
-        priority                    = 100
-        direction                   = "Inbound"
-        access                      = "Allow"
-        protocol                    = "Tcp"
-        source_port_range           = "*"
-        destination_port_range      = "80"
-        source_address_prefix       = "*"
-        destination_address_prefix  = "*"
+        name                       = "Allow-HTTP"
+        priority                   = 100
+        direction                  = "Inbound"
+        access                     = "Allow"
+        protocol                   = "Tcp"
+        source_port_range          = "*"
+        destination_port_range     = "80"
+        source_address_prefix      = "*"
+        destination_address_prefix = "*"
       },
       {
-        name                        = "Allow-HTTPS"
-        priority                    = 110
-        direction                   = "Inbound"
-        access                      = "Allow"
-        protocol                    = "Tcp"
-        source_port_range           = "*"
-        destination_port_range      = "443"
-        source_address_prefix       = "*"
-        destination_address_prefix  = "*"
+        name                       = "Allow-HTTPS"
+        priority                   = 110
+        direction                  = "Inbound"
+        access                     = "Allow"
+        protocol                   = "Tcp"
+        source_port_range          = "*"
+        destination_port_range     = "443"
+        source_address_prefix      = "*"
+        destination_address_prefix = "*"
       },
       {
-        name                        = "Allow-SSH"
-        priority                    = 120
-        direction                   = "Inbound"
-        access                      = "Allow"
-        protocol                    = "Tcp"
-        source_port_range           = "*"
-        destination_port_range      = "22"
-        source_address_prefix       = "*"
-        destination_address_prefix  = "*"
+        name                       = "Allow-SSH"
+        priority                   = 120
+        direction                  = "Inbound"
+        access                     = "Allow"
+        protocol                   = "Tcp"
+        source_port_range          = "*"
+        destination_port_range     = "22"
+        source_address_prefix      = "*"
+        destination_address_prefix = "*"
       }
     ]
   }
@@ -66,57 +66,57 @@ dynamic_subnets = {
     cidr_block = "10.0.2.0/24"
     security_rules = [
       {
-        name                        = "Allow-App-From-Frontend"
-        priority                    = 100
-        direction                   = "Inbound"
-        access                      = "Allow"
-        protocol                    = "Tcp"
-        source_port_range           = "*"
-        destination_port_range      = "8080"          # adjust to your backend's actual port
-        source_address_prefix       = "10.0.1.0/24"    # only from frontend subnet
-        destination_address_prefix  = "*"
+        name                       = "Allow-App-From-Frontend"
+        priority                   = 100
+        direction                  = "Inbound"
+        access                     = "Allow"
+        protocol                   = "Tcp"
+        source_port_range          = "*"
+        destination_port_range     = "8080"        # adjust to your backend's actual port
+        source_address_prefix      = "10.0.1.0/24" # only from frontend subnet
+        destination_address_prefix = "*"
       },
       {
-        name                        = "Allow-SSH-Internal"
-        priority                    = 110
-        direction                   = "Inbound"
-        access                      = "Allow"
-        protocol                    = "Tcp"
-        source_port_range           = "*"
-        destination_port_range      = "22"
-        source_address_prefix       = "10.0.0.0/16"    # only from within the VNet, not internet
-        destination_address_prefix  = "*"
+        name                       = "Allow-SSH-Internal"
+        priority                   = 110
+        direction                  = "Inbound"
+        access                     = "Allow"
+        protocol                   = "Tcp"
+        source_port_range          = "*"
+        destination_port_range     = "22"
+        source_address_prefix      = "10.0.0.0/16" # only from within the VNet, not internet
+        destination_address_prefix = "*"
       }
     ]
   }
-   database = {
-  cidr_block = "10.0.3.0/24"
+  database = {
+    cidr_block = "10.0.3.0/24"
 
-  delegation = {
-    name = "postgres-flexible-server"
+    delegation = {
+      name = "postgres-flexible-server"
 
-    service_name = "Microsoft.DBforPostgreSQL/flexibleServers"
+      service_name = "Microsoft.DBforPostgreSQL/flexibleServers"
 
-    actions = [
-      "Microsoft.Network/virtualNetworks/subnets/join/action"
+      actions = [
+        "Microsoft.Network/virtualNetworks/subnets/join/action"
+      ]
+    }
+
+    security_rules = [
+      {
+        name                       = "Allow-Postgres-From-Backend"
+        priority                   = 100
+        direction                  = "Inbound"
+        access                     = "Allow"
+        protocol                   = "Tcp"
+        source_port_range          = "*"
+        destination_port_range     = "5432"
+        source_address_prefix      = "10.0.2.0/24"
+        destination_address_prefix = "*"
+      }
     ]
   }
 
-  security_rules = [
-    {
-      name                       = "Allow-Postgres-From-Backend"
-      priority                   = 100
-      direction                  = "Inbound"
-      access                     = "Allow"
-      protocol                   = "Tcp"
-      source_port_range          = "*"
-      destination_port_range     = "5432"
-      source_address_prefix      = "10.0.2.0/24"
-      destination_address_prefix = "*"
-    }
-  ]
-}
-  
 }
 
 
@@ -192,12 +192,12 @@ virtual_machines = {
     }
     disks = {}
   }
- 
+
 }
 
 postgresql_metadata = {
-  version             = "16"
-  zone = "1"
+  version = "16"
+  zone    = "1"
 
   storage_mb   = 32768
   storage_tier = "P4"

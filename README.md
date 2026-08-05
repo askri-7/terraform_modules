@@ -22,3 +22,7 @@
 │   └── Vnet/                # Virtual Network module
 └── README.md
 ```
+
+# Infrastructure architecture : Azure multi-tier web application
+
+![](assets/infra.png)
