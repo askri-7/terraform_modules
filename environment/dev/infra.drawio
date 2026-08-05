@@ -1,0 +1,85 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="R2y3hkWlnQQ-aPjpUpoo">
+    <mxGraphModel dx="1460" dy="948" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="MnuSElDITEegXTqr9JIK-1" parent="1" style="swimlane;startSize=24;fillColor=#dae8fc;strokeColor=#6c8ebf;html=1;" value="Azure Subscription" vertex="1">
+          <mxGeometry height="730" width="1310" x="170" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-2" parent="MnuSElDITEegXTqr9JIK-1" style="swimlane;startSize=24;fillColor=#e8f4f8;strokeColor=#5b9bd5;html=1;" value="Resource Group" vertex="1">
+          <mxGeometry height="640" width="1200" x="30" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-3" parent="MnuSElDITEegXTqr9JIK-2" style="swimlane;startSize=24;fillColor=#e8f5e9;strokeColor=#70ad47;html=1;" value="Virtual Network" vertex="1">
+          <mxGeometry height="500" width="760" x="30" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-4" parent="MnuSElDITEegXTqr9JIK-3" style="swimlane;startSize=24;fillColor=#fff9e6;strokeColor=#d6b656;html=1;" value="Subnet" vertex="1">
+          <mxGeometry height="400" width="700" x="30" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-5" parent="MnuSElDITEegXTqr9JIK-4" style="shape=image;html=1;labelBackgroundColor=default;verticalAlign=top;verticalLabelPosition=bottom;aspect=fixed;points=[];image=img/lib/azure2/networking/Network_Security_Groups.svg;" value="Network Security Group" vertex="1">
+          <mxGeometry height="80" width="80" x="10" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-6" parent="MnuSElDITEegXTqr9JIK-4" style="shape=image;html=1;labelBackgroundColor=default;verticalAlign=top;verticalLabelPosition=bottom;aspect=fixed;points=[];image=img/lib/azure2/networking/Network_Interfaces.svg;" value="Network Interface" vertex="1">
+          <mxGeometry height="80" width="80" x="260" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-7" parent="MnuSElDITEegXTqr9JIK-4" style="shape=image;html=1;labelBackgroundColor=default;verticalAlign=top;verticalLabelPosition=bottom;aspect=fixed;points=[];image=img/lib/azure2/compute/Virtual_Machine.svg;" value="Virtual Machine" vertex="1">
+          <mxGeometry height="80" width="80" x="460" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-13" parent="MnuSElDITEegXTqr9JIK-4" style="shape=image;html=1;labelBackgroundColor=default;verticalAlign=top;verticalLabelPosition=bottom;aspect=fixed;points=[];image=img/lib/azure2/networking/DDoS_Protection_Plans.svg;" value="DDoS Protection Plan" vertex="1">
+          <mxGeometry height="80" width="80" x="20" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-23" edge="1" parent="MnuSElDITEegXTqr9JIK-4" source="MnuSElDITEegXTqr9JIK-13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;" target="MnuSElDITEegXTqr9JIK-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-9" parent="MnuSElDITEegXTqr9JIK-2" style="shape=image;html=1;labelBackgroundColor=default;verticalAlign=top;verticalLabelPosition=bottom;aspect=fixed;points=[];image=img/lib/azure2/compute/Disks.svg;" value="OS Disk" vertex="1">
+          <mxGeometry height="80" width="80" x="920" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-10" parent="MnuSElDITEegXTqr9JIK-2" style="shape=image;html=1;labelBackgroundColor=default;verticalAlign=top;verticalLabelPosition=bottom;aspect=fixed;points=[];image=img/lib/azure2/compute/Disks.svg;" value="Data Disk" vertex="1">
+          <mxGeometry height="80" width="80" x="1110" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-11" parent="MnuSElDITEegXTqr9JIK-2" style="shape=image;html=1;labelBackgroundColor=default;verticalAlign=top;verticalLabelPosition=bottom;aspect=fixed;points=[];image=img/lib/azure2/storage/Storage_Accounts.svg;" value="Storage Account" vertex="1">
+          <mxGeometry height="80" width="80" x="850" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-12" parent="MnuSElDITEegXTqr9JIK-2" style="shape=image;html=1;labelBackgroundColor=default;verticalAlign=top;verticalLabelPosition=bottom;aspect=fixed;points=[];image=img/lib/azure2/management_governance/Monitor.svg;" value="Azure Monitor" vertex="1">
+          <mxGeometry height="80" width="80" x="1070" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-14" parent="1" style="shape=mxgraph.azure.internet;html=1;fillColor=light-dark(#0050EF,#007FFF);fontColor=#ffffff;strokeColor=#001DBC;" value="Internet" vertex="1">
+          <mxGeometry height="80" width="80" x="30" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-15" edge="1" parent="1" source="MnuSElDITEegXTqr9JIK-14" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;" target="MnuSElDITEegXTqr9JIK-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-16" edge="1" parent="1" source="MnuSElDITEegXTqr9JIK-8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;" target="MnuSElDITEegXTqr9JIK-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-17" edge="1" parent="1" source="MnuSElDITEegXTqr9JIK-5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;" target="MnuSElDITEegXTqr9JIK-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-18" edge="1" parent="1" source="MnuSElDITEegXTqr9JIK-6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;" target="MnuSElDITEegXTqr9JIK-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-19" edge="1" parent="1" source="MnuSElDITEegXTqr9JIK-7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;" target="MnuSElDITEegXTqr9JIK-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-20" edge="1" parent="1" source="MnuSElDITEegXTqr9JIK-7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;" target="MnuSElDITEegXTqr9JIK-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-21" edge="1" parent="1" source="MnuSElDITEegXTqr9JIK-7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;" target="MnuSElDITEegXTqr9JIK-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-22" edge="1" parent="1" source="MnuSElDITEegXTqr9JIK-7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;" target="MnuSElDITEegXTqr9JIK-12">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="930" y="580" />
+              <mxPoint x="930" y="660" />
+              <mxPoint x="1310" y="660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="MnuSElDITEegXTqr9JIK-8" parent="1" style="shape=image;html=1;labelBackgroundColor=default;verticalAlign=top;verticalLabelPosition=bottom;aspect=fixed;points=[];image=img/lib/azure2/networking/Public_IP_Addresses_Classic.svg;" value="Public IP" vertex="1">
+          <mxGeometry height="80" width="80" x="30" y="540" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
