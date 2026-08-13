@@ -163,14 +163,14 @@ frontend_url = "https://localhost"
 db_name = "secure_login_db"
 
 # OAuth public IDs (not secrets)
-github_client_id = ""       
+github_client_id = "Ov23liRZBFLPUkz5iiUz"       
 github_callback_url = "https://yourdomain.com/auth/github/callback"
 
-google_client_id = "123456789..."      
+google_client_id = "508085257923-vtuio6f4qchko8beu3l9jkt905hgq33k.apps.googleusercontent.com"      
 google_callback_url = "https://yourdomain.com/auth/google/callback"
 
 # Admin
-admin_email = "admin@yourcompany.com"
+admin_email = "askriisra0@gmail.com"
 
 # App repo
 app_repo_url = "https://github.com/askri-7/secure-login-demo.git"
