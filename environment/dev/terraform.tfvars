@@ -146,22 +146,32 @@ tags = {
 }
 cloud_init_path = "../../cloud-init/webapp.sh"
 
+
 # Database connection tuning
-db_pool_max           = 20
-db_timeout            = 10000
-db_idle_timeout       = 30000
-db_statement_timeout  = 30000
+db_pool_max = 20
+db_timeout = 10000
+db_idle_timeout = 30000
+db_statement_timeout = 30000
 
+# Database user (non-sensitive)
+db_user = "webapp_user"
 
-node_env     = "production"
-app_port     = 3000
-frontend_url = "https://yourdomain.com"
+# App config
+node_env = "production"
+app_port = 3000
+frontend_url = "https://ip"
+db_name = "secure_login_db"
 
-db_name      = "secure_login"
-
-
+# OAuth public IDs (not secrets)
+github_client_id = ""       
 github_callback_url = "https://yourdomain.com/auth/github/callback"
+
+google_client_id = "123456789..."      
 google_callback_url = "https://yourdomain.com/auth/google/callback"
 
+# Admin
+admin_email = "admin@yourcompany.com"
+
+# App repo
 app_repo_url = "https://github.com/askri-7/secure-login-demo.git"
-app_branch   = "main"
+app_branch = "main"  

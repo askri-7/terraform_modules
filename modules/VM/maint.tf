@@ -54,6 +54,14 @@ resource "azurerm_linux_virtual_machine" "vm" {
       storage_account_uri = var.boot_diagnostics.storage_account_uri
     }
   }
+
+  #identity
+
+
+     identity {
+    type = "SystemAssigned"
+  }
+ 
   tags = var.tags
 }
 # skip CKV_AZURE_93 use the default azure key encryption 

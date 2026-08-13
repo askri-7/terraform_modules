@@ -103,7 +103,4 @@ module "vm" {
   disks                = var.disks
   tags                = var.tags
   
-
-  ## identity 
- 
 }
