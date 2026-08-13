@@ -57,11 +57,11 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
   #identity
 
-
+/*
      identity {
     type = "SystemAssigned"
   }
- 
+ */
   tags = var.tags
 }
 # skip CKV_AZURE_93 use the default azure key encryption 

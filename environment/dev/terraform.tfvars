@@ -3,7 +3,7 @@
 
 resource_group_name  = "isra-rg-01"
 storage_account_name = "terrafstorageaccount01"
-location             = "FranceCentral"
+location             = "francecentral"
 naming = {
   environment = "dev"
   project     = "internship-web"
@@ -90,10 +90,9 @@ ip_conf = {
 
 # Virtual Machine
 
-
 virtual_machine_vars = {
 
-  size           = "Standard_B4ms"
+  size           = "Standard_B2s_v2"
   admin_username = "evil"
   computer_name  = "webapp"
 }
@@ -159,15 +158,15 @@ db_user = "webapp_user"
 # App config
 node_env     = "production"
 app_port     = 3000
-frontend_url = "https://localhost"
+frontend_url = "https://20.111.18.168"
 db_name      = "secure_login_db"
 
 # OAuth public IDs (not secrets)
 github_client_id    = "Ov23liRZBFLPUkz5iiUz"
-github_callback_url = "https://yourdomain.com/auth/github/callback"
+github_callback_url = "https://20.111.18.168/auth/github/callback"
 
 google_client_id    = "508085257923-vtuio6f4qchko8beu3l9jkt905hgq33k.apps.googleusercontent.com"
-google_callback_url = "https://yourdomain.com/auth/google/callback"
+google_callback_url = "https://20.111.18.168/auth/google/callback"
 
 # Admin
 admin_email = "askriisra0@gmail.com"
