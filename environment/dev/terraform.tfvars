@@ -102,7 +102,7 @@ virtual_machine_vars = {
 
 
 os_disk = {
-  
+
   caching              = "ReadWrite"
   storage_account_type = "Premium_LRS"
 
@@ -148,25 +148,25 @@ cloud_init_path = "../../cloud-init/webapp.sh"
 
 
 # Database connection tuning
-db_pool_max = 20
-db_timeout = 10000
-db_idle_timeout = 30000
+db_pool_max          = 20
+db_timeout           = 10000
+db_idle_timeout      = 30000
 db_statement_timeout = 30000
 
 # Database user (non-sensitive)
 db_user = "webapp_user"
 
 # App config
-node_env = "production"
-app_port = 3000
+node_env     = "production"
+app_port     = 3000
 frontend_url = "https://localhost"
-db_name = "secure_login_db"
+db_name      = "secure_login_db"
 
 # OAuth public IDs (not secrets)
-github_client_id = "Ov23liRZBFLPUkz5iiUz"       
+github_client_id    = "Ov23liRZBFLPUkz5iiUz"
 github_callback_url = "https://yourdomain.com/auth/github/callback"
 
-google_client_id = "508085257923-vtuio6f4qchko8beu3l9jkt905hgq33k.apps.googleusercontent.com"      
+google_client_id    = "508085257923-vtuio6f4qchko8beu3l9jkt905hgq33k.apps.googleusercontent.com"
 google_callback_url = "https://yourdomain.com/auth/google/callback"
 
 # Admin
@@ -174,4 +174,4 @@ admin_email = "askriisra0@gmail.com"
 
 # App repo
 app_repo_url = "https://github.com/askri-7/secure-login-demo.git"
-app_branch = "behind"  
+app_branch   = "behind"  

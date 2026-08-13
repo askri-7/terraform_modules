@@ -90,7 +90,7 @@ variable "virtual_machine_vars" {
 }
 variable "os_disk" {
   type = object({
-  
+
     caching              = string
     storage_account_type = string
 
@@ -160,7 +160,7 @@ variable "cloud_init_path" {
 # ═══════════════════════════════════════════
 
 variable "node_env" {
-  type    = string
+  type = string
 }
 
 variable "app_port" {
@@ -169,8 +169,8 @@ variable "app_port" {
 }
 
 variable "frontend_url" {
-  type    = string
-  
+  type = string
+
 }
 
 # ═══════════════════════════════════════════
@@ -178,33 +178,33 @@ variable "frontend_url" {
 # ═══════════════════════════════════════════
 
 variable "db_name" {
-  type    = string
+  type = string
 
 }
 
 variable "db_user" {
-  type    = string
-  
+  type = string
+
 }
 
 variable "db_pool_max" {
-  type    = number
-  
+  type = number
+
 }
 
 variable "db_timeout" {
-  type    = number
-  
+  type = number
+
 }
 
 variable "db_idle_timeout" {
-  type    = number
-  
+  type = number
+
 }
 
 variable "db_statement_timeout" {
-  type    = number
-  
+  type = number
+
 }
 
 # ═══════════════════════════════════════════
@@ -222,7 +222,7 @@ variable "jwt_secret" {
 }
 
 variable "admin_email" {
-  type    = string
+  type      = string
   sensitive = true
 }
 
@@ -245,8 +245,8 @@ variable "github_client_secret" {
 }
 
 variable "github_callback_url" {
-  type    = string
-  
+  type = string
+
 }
 
 variable "google_client_id" {
@@ -259,8 +259,8 @@ variable "google_client_secret" {
 }
 
 variable "google_callback_url" {
-  type    = string
-  
+  type = string
+
 }
 
 # ═══════════════════════════════════════════
@@ -268,11 +268,11 @@ variable "google_callback_url" {
 # ═══════════════════════════════════════════
 
 variable "app_repo_url" {
-  type    = string
-  
+  type = string
+
 }
 
 variable "app_branch" {
-  type    = string
+  type = string
 
 }
