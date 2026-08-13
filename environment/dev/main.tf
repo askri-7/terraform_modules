@@ -65,8 +65,28 @@ module "vm" {
   ssh_public_key      = var.ssh_public_key
   
   ### custum config
-  cloud_init = filebase64(var.cloud_init_path)
-  
+
+    cloud_init = base64encode(templatefile(var.cloud_init_path, {
+    node_env     = var.node_env
+    app_port     = var.app_port
+    frontend_url = var.frontend_url
+    db_name      = var.db_name
+    db_user      = var.db_user
+    db_pool_max  = var.db_pool_max
+    db_timeout   = var.db_timeout
+    db_idle_timeout      = var.db_idle_timeout
+    db_statement_timeout = var.db_statement_timeout
+
+    github_client_id    = var.github_client_id
+    github_callback_url = var.github_callback_url
+    google_client_id    = var.google_client_id
+    google_callback_url = var.google_callback_url
+
+    key_vault_url = azurerm_key_vault.app.vault_uri
+
+    app_repo_url = var.app_repo_url
+    app_branch   = var.app_branch
+  }))
   ###  nic 
 
   nic_vars = {
@@ -81,5 +101,9 @@ module "vm" {
   os_disk              = var.os_disk
   boot_diagnostics     = var.boot_diagnostics
   disks                = var.disks
-  tags                 = var.tags
+  tags                = var.tags
+  
+
+  ## identity 
+ 
 }

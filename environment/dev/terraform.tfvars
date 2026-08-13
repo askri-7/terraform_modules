@@ -93,7 +93,7 @@ ip_conf = {
 
 virtual_machine_vars = {
 
-  size           = "Standard_B2s_v2"
+  size           = "Standard_B4ms"
   admin_username = "evil"
   computer_name  = "webapp"
 }
@@ -145,3 +145,23 @@ tags = {
   costcenter    = "internshsip"
 }
 cloud_init_path = "../../cloud-init/webapp.sh"
+
+# Database connection tuning
+db_pool_max           = 20
+db_timeout            = 10000
+db_idle_timeout       = 30000
+db_statement_timeout  = 30000
+
+
+node_env     = "production"
+app_port     = 3000
+frontend_url = "https://yourdomain.com"
+
+db_name      = "secure_login"
+
+
+github_callback_url = "https://yourdomain.com/auth/github/callback"
+google_callback_url = "https://yourdomain.com/auth/google/callback"
+
+app_repo_url = "https://github.com/askri-7/secure-login-demo.git"
+app_branch   = "main"

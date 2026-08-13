@@ -153,3 +153,126 @@ variable "cloud_init_path" {
 }
 
 
+
+
+# ═══════════════════════════════════════════
+# APP CONFIGURATION (non-sensitive)
+# ═══════════════════════════════════════════
+
+variable "node_env" {
+  type    = string
+}
+
+variable "app_port" {
+  type    = number
+  default = 3000
+}
+
+variable "frontend_url" {
+  type    = string
+  
+}
+
+# ═══════════════════════════════════════════
+# DATABASE (non-sensitive tuning)
+# ═══════════════════════════════════════════
+
+variable "db_name" {
+  type    = string
+
+}
+
+variable "db_user" {
+  type    = string
+  
+}
+
+variable "db_pool_max" {
+  type    = number
+  
+}
+
+variable "db_timeout" {
+  type    = number
+  
+}
+
+variable "db_idle_timeout" {
+  type    = number
+  
+}
+
+variable "db_statement_timeout" {
+  type    = number
+  
+}
+
+# ═══════════════════════════════════════════
+# SECRETS (sensitive — never commit values)
+# ═══════════════════════════════════════════
+
+variable "db_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "jwt_secret" {
+  type      = string
+  sensitive = true
+}
+
+variable "admin_email" {
+  type    = string
+  sensitive = true
+}
+
+variable "admin_password" {
+  type      = string
+  sensitive = true
+}
+
+# ═══════════════════════════════════════════
+# OAUTH (public IDs + sensitive secrets)
+# ═══════════════════════════════════════════
+
+variable "github_client_id" {
+  type = string
+}
+
+variable "github_client_secret" {
+  type      = string
+  sensitive = true
+}
+
+variable "github_callback_url" {
+  type    = string
+  
+}
+
+variable "google_client_id" {
+  type = string
+}
+
+variable "google_client_secret" {
+  type      = string
+  sensitive = true
+}
+
+variable "google_callback_url" {
+  type    = string
+  
+}
+
+# ═══════════════════════════════════════════
+# APP REPO
+# ═══════════════════════════════════════════
+
+variable "app_repo_url" {
+  type    = string
+  
+}
+
+variable "app_branch" {
+  type    = string
+
+}
