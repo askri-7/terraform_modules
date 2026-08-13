@@ -58,9 +58,9 @@ echo "[+] Configuring PostgreSQL..."
 
 # Create DB user and database
 # NOTE: delimiter is quoted ('EOF') so bash does not try to expand any
-# $, `, or \ characters that may appear inside db_password — all of the
-# ${...} tokens below are already substituted by Terraform's templatefile
-# before this script ever runs, so no bash-side expansion is needed here.
+# dollar-sign, backtick, or backslash characters that may appear inside
+# db_password. All Terraform template variables below are already
+# substituted at plan/apply time, before this script ever runs on the VM.
 sudo -u postgres psql <<'EOF'
 CREATE USER ${db_user} WITH PASSWORD '${db_password}';
 CREATE DATABASE ${db_name} OWNER ${db_user};
