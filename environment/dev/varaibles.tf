@@ -248,7 +248,7 @@ variable "github_callback_url" {
   type = string
 
 }
-
+//
 variable "google_client_id" {
   type = string
 }
