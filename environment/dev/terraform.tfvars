@@ -159,7 +159,7 @@ db_user = "webapp_user"
 # App config
 node_env = "production"
 app_port = 3000
-frontend_url = "https://ip"
+frontend_url = "https://localhost"
 db_name = "secure_login_db"
 
 # OAuth public IDs (not secrets)

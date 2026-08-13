@@ -51,10 +51,23 @@ apt-get install -y postgresql-${POSTGRES_VERSION} postgresql-client-${POSTGRES_V
 systemctl enable postgresql
 systemctl start postgresql
 
+
 #################################
 # Configure PostgreSQL
 #################################
 echo "[+] Configuring PostgreSQL..."
+
+# 1. Write performance tuning config (NOT via psql — just a file)
+cat > /etc/postgresql/${POSTGRES_VERSION}/main/conf.d/99-custom.conf <<'PGCONF'
+shared_buffers = 256MB
+effective_cache_size = 1GB
+work_mem = 16MB
+maintenance_work_mem = 128MB
+max_connections = 50
+PGCONF
+
+# 2. Restart PostgreSQL to pick up config
+systemctl restart postgresql
 
 # Create DB user and database
 sudo -u postgres psql <<EOF
@@ -83,6 +96,10 @@ mkdir -p /data
 mkfs -t ext4 $DATA_DISK || true
 mount $DATA_DISK /data || true
 echo "$DATA_DISK /data ext4 defaults,nofail 0 2" >> /etc/fstab
+
+
+
+
 
 # Move PostgreSQL data to data disk for persistence
 systemctl stop postgresql
@@ -159,8 +176,8 @@ cat > /etc/nginx/sites-available/default <<'NGINX'
 server {
     listen 80;
     server_name _;
-    
-    location / {
+   
+    location /api/ {
         proxy_pass http://127.0.0.1:${app_port};
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
