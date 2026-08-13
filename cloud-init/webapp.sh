@@ -230,7 +230,13 @@ systemctl reload nginx
 #################################
 echo "[+] Starting application with PM2..."
 cd $${APP_DIR}/backend
-pm2 start dist/main.js --name "secure-login-demo"
+# NOTE: nest build's output here is dist/src/main.js, not dist/main.js.
+# prisma.config.ts lives at the backend project root (outside src/), which
+# pulls TypeScript's inferred rootDir up to the project root, so tsc mirrors
+# the full directory structure (src/, prisma/, etc.) under dist/ instead of
+# flattening src/ into dist/. Verified by running `nest build` locally and
+# inspecting dist/ — main.js lands at dist/src/main.js.
+pm2 start dist/src/main.js --name "secure-login-demo"
 pm2 startup systemd -u root --hp /root
 pm2 save
 
