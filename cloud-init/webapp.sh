@@ -57,8 +57,12 @@ systemctl start postgresql
 echo "[+] Configuring PostgreSQL..."
 
 # Create DB user and database
-sudo -u postgres psql <<EOF
-CREATE USER ${db_user} WITH PASSWORD '__DB_PASS_PLACEHOLDER__';
+# NOTE: delimiter is quoted ('EOF') so bash does not try to expand any
+# $, `, or \ characters that may appear inside db_password — all of the
+# ${...} tokens below are already substituted by Terraform's templatefile
+# before this script ever runs, so no bash-side expansion is needed here.
+sudo -u postgres psql <<'EOF'
+CREATE USER ${db_user} WITH PASSWORD '${db_password}';
 CREATE DATABASE ${db_name} OWNER ${db_user};
 GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user};
 ALTER ROLE ${db_user} CREATEDB;
@@ -153,6 +157,34 @@ echo "[+] Building application..."
 npm run build
 
 #################################
+# Build & Deploy Frontend
+#################################
+echo "[+] Building frontend..."
+cd $${APP_DIR}/frontend
+
+# Belt-and-suspenders: the repo ships a .env.production with
+# VITE_API_URL=/api, which `vite build` already picks up automatically.
+# We export it explicitly too so the build is correct even if that
+# file is ever removed or edited.
+export VITE_API_URL="/api"
+
+npm ci
+npm run build
+
+echo "[+] Deploying frontend to Nginx webroot..."
+rm -rf /usr/share/nginx/html/*
+cp -r $${APP_DIR}/frontend/dist/* /usr/share/nginx/html/
+chown -R www-data:www-data /usr/share/nginx/html
+
+#################################
+# Prune build-only dependencies
+#################################
+echo "[+] Pruning devDependencies (build/migrate/seed already done)..."
+cd $${APP_DIR}/backend
+npm prune --omit=dev
+rm -rf $${APP_DIR}/frontend/node_modules
+
+#################################
 # Configure Nginx
 #################################
 echo "[+] Configuring Nginx..."
@@ -198,7 +230,7 @@ systemctl reload nginx
 #################################
 echo "[+] Starting application with PM2..."
 cd $${APP_DIR}/backend
-pm2 start dist/main.js --name "secure-login-demo" -- --port ${app_port}
+pm2 start dist/main.js --name "secure-login-demo"
 pm2 startup systemd -u root --hp /root
 pm2 save
 
@@ -220,4 +252,3 @@ echo "App: $${APP_DIR}"
 echo "DB: postgresql://${db_user}:****@localhost:5432/${db_name}"
 echo "Health: http://$(curl -s ifconfig.me)/health/live"
 pm2 status
-
