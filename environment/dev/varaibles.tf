@@ -57,6 +57,7 @@ variable "pub_ips" {
     public_ip_location = string
     allocation         = string
     sku                = string
+    label              = string
   }))
   description = "needed public ips"
 }

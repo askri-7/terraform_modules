@@ -75,6 +75,7 @@ pub_ips = {
     public_ip_location = "FranceCentral"
     allocation         = "Static"
     sku                = "Standard"
+    label              = "secure-logy"
   }
 }
 

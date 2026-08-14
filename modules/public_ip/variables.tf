@@ -6,6 +6,7 @@ variable "pub_ips" {
   type = map(object({
     allocation         = string
     sku                = string
+    label              = string
   }))
   description = "needed public ips"
 }

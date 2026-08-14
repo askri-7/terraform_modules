@@ -4,6 +4,7 @@ resource "azurerm_public_ip" "pub_ip" {
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = each.value.allocation
+  domain_name_label   = each.value.label
   sku                 = each.value.sku
   tags                = var.tags
 }
