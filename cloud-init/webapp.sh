@@ -31,7 +31,7 @@ apt-get install -y nginx
 systemctl enable nginx
 
 #################################
-# Install Certbot (for free SSL)
+# Install Certbot
 #################################
 echo "[+] Installing Certbot..."
 apt-get install -y certbot python3-certbot-nginx
@@ -54,7 +54,27 @@ echo "deb [signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.o
 apt-get update
 apt-get install -y postgresql-$${POSTGRES_VERSION} postgresql-client-$${POSTGRES_VERSION}
 systemctl enable postgresql
+
+#################################
+# Start PostgreSQL & wait for it
+#################################
+echo "[+] Starting PostgreSQL..."
 systemctl start postgresql
+
+for i in {1..30}; do
+  if pg_isready -q; then
+    echo "[+] PostgreSQL is ready."
+    break
+  fi
+  echo "  ...waiting for PostgreSQL ($i/30)"
+  sleep 1
+done
+
+if ! pg_isready -q; then
+  echo "ERROR: PostgreSQL failed to start initially"
+  journalctl -u postgresql -n 50
+  exit 1
+fi
 
 #################################
 # Configure PostgreSQL
@@ -69,6 +89,8 @@ ALTER ROLE ${db_user} CREATEDB;
 EOF
 
 cat > /etc/postgresql/$${POSTGRES_VERSION}/main/conf.d/99-custom.conf <<'PGCONF'
+listen_addresses = 'localhost'
+port = 5432
 shared_buffers = 256MB
 effective_cache_size = 1GB
 work_mem = 16MB
@@ -76,7 +98,23 @@ maintenance_work_mem = 128MB
 max_connections = 50
 PGCONF
 
+echo "[+] Restarting PostgreSQL with custom config..."
 systemctl restart postgresql
+
+for i in {1..30}; do
+  if pg_isready -q; then
+    echo "[+] PostgreSQL is ready."
+    break
+  fi
+  echo "  ...waiting after config restart ($i/30)"
+  sleep 1
+done
+
+if ! pg_isready -q; then
+  echo "ERROR: PostgreSQL failed to restart after applying config"
+  journalctl -u postgresql -n 50
+  exit 1
+fi
 
 #################################
 # Mount Data Disk (idempotent)
@@ -117,30 +155,66 @@ fi
 echo "[+] Setting up PostgreSQL on data disk..."
 
 PG_DATA_DIR="/data/postgresql"
-PG_LINK="/var/lib/postgresql/$${POSTGRES_VERSION}/main"
+PG_ORIG_DIR="/var/lib/postgresql/$${POSTGRES_VERSION}/main"
 
-# Only move if not already moved
-if [ ! -L "$PG_LINK" ] || [ "$(readlink -f "$PG_LINK")" != "$PG_DATA_DIR" ]; then
+# Check if already bind-mounted
+if ! mountpoint -q "$PG_ORIG_DIR" 2>/dev/null; then
+    echo "[+] Stopping PostgreSQL for data migration..."
     systemctl stop postgresql
     
     mkdir -p "$PG_DATA_DIR"
     
-    # Only copy if data dir is empty
+    # Only copy if data dir is empty (including hidden files)
     if [ -z "$(ls -A "$PG_DATA_DIR" 2>/dev/null)" ]; then
-        echo "[+] Copying PostgreSQL data..."
-        cp -a /var/lib/postgresql/$${POSTGRES_VERSION}/main/* "$PG_DATA_DIR/" 2>/dev/null || true
+        echo "[+] Copying PostgreSQL data to data disk..."
+        cp -a "$PG_ORIG_DIR"/. "$PG_DATA_DIR/" 2>/dev/null || true
     fi
     
-    rm -rf "$PG_LINK"
-    ln -s "$PG_DATA_DIR" "$PG_LINK"
     chown -R postgres:postgres /data/postgresql
     chmod 700 "$PG_DATA_DIR"
     
+    # Use bind mount instead of symlink — systemd-friendly and transparent to Postgres
+    mount --bind "$PG_DATA_DIR" "$PG_ORIG_DIR"
+    
+    # Persist bind mount in fstab
+    if ! grep -q "$PG_DATA_DIR.*$PG_ORIG_DIR.*bind" /etc/fstab; then
+        echo "$PG_DATA_DIR $PG_ORIG_DIR none bind,nofail 0 2" >> /etc/fstab
+    fi
+    
+    echo "[+] Starting PostgreSQL..."
     systemctl start postgresql
-    echo "[+] PostgreSQL data moved."
+    
+    echo "[+] Waiting for PostgreSQL to be ready after data move..."
+    for i in {1..30}; do
+      if pg_isready -q; then
+        echo "[+] PostgreSQL is ready."
+        break
+      fi
+      echo "  ...waiting ($i/30)"
+      sleep 1
+    done
+    
+    if ! pg_isready -q; then
+      echo "ERROR: PostgreSQL failed to start after data move"
+      journalctl -u postgresql -n 50
+      exit 1
+    fi
+    
+    echo "[+] PostgreSQL data moved successfully."
 else
-    echo "[+] PostgreSQL already on data disk, skipping."
+    echo "[+] PostgreSQL already on data disk."
+    systemctl start postgresql || true
+    
+    for i in {1..30}; do
+      if pg_isready -q; then
+        echo "[+] PostgreSQL is ready."
+        break
+      fi
+      echo "  ...waiting ($i/30)"
+      sleep 1
+    done
 fi
+
 #################################
 # Clone & Setup App
 #################################
@@ -191,6 +265,25 @@ npm ci
 
 echo "[+] Generating Prisma client..."
 npx prisma generate
+
+#################################
+# Wait for DB before migrations
+#################################
+echo "[+] Verifying PostgreSQL is reachable before migrations..."
+for i in {1..30}; do
+  if pg_isready -q -h localhost -p 5432; then
+    echo "[+] PostgreSQL is accepting TCP connections."
+    break
+  fi
+  echo "  ...waiting for TCP ($i/30)"
+  sleep 1
+done
+
+if ! pg_isready -q -h localhost -p 5432; then
+  echo "ERROR: PostgreSQL is not accepting TCP connections on localhost:5432"
+  journalctl -u postgresql -n 50
+  exit 1
+fi
 
 echo "[+] Running database migrations..."
 npx prisma migrate deploy
