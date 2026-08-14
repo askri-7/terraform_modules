@@ -159,15 +159,15 @@ db_user = "webapp_user"
 #node_env     = "production"
 node_env = "dev"
 app_port     = 3000
-frontend_url = "https://20.111.18.168"
+frontend_url = "https://secure-logy.francecentral.cloudapp.azure.com"
 db_name      = "secure_login_db"
 
 # OAuth public IDs (not secrets)
 github_client_id    = "Ov23liRZBFLPUkz5iiUz"
-github_callback_url = "https://20.111.18.168/auth/github/callback"
+github_callback_url = "https://secure-logy.francecentral.cloudapp.azure.com/auth/github/callback"
 
 google_client_id    = "508085257923-vtuio6f4qchko8beu3l9jkt905hgq33k.apps.googleusercontent.com"
-google_callback_url = "https://20.111.18.168/auth/google/callback"
+google_callback_url = "https://secure-logy.francecentral.cloudapp.azure.com/auth/google/callback"
 
 # Admin
 
@@ -175,3 +175,5 @@ google_callback_url = "https://20.111.18.168/auth/google/callback"
 # App repo
 app_repo_url = "https://github.com/askri-7/secure-login-demo.git"
 app_branch   = "main"  
+
+domain_name = "secure-logy.francecentral.cloudapp.azure.com"

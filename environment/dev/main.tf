@@ -67,6 +67,7 @@ module "vm" {
   ### custum config
 
 cloud_init = base64encode(templatefile(var.cloud_init_path, {
+    domain_name          = var.domain_name
     node_env             = var.node_env
     app_port             = var.app_port
     frontend_url         = var.frontend_url

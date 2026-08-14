@@ -276,3 +276,9 @@ variable "app_branch" {
   type = string
 
 }
+
+
+variable "domain_name" {
+  type    = string
+
+}
