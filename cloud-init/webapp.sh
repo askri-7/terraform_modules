@@ -79,23 +79,68 @@ PGCONF
 systemctl restart postgresql
 
 #################################
-# Mount Data Disk
+# Mount Data Disk (idempotent)
 #################################
-echo "[+] Mounting data disk..."
-DATA_DISK=$(lsblk -dpno NAME,SIZE,TYPE | grep disk | awk '{print $1}' | tail -1)
-mkdir -p /data
-mkfs -t ext4 $${DATA_DISK} || true
-mount $${DATA_DISK} /data || true
-echo "$${DATA_DISK} /data ext4 defaults,nofail 0 2" >> /etc/fstab
+echo "[+] Checking data disk..."
 
-systemctl stop postgresql
-mkdir -p /data/postgresql
-cp -a /var/lib/postgresql/$${POSTGRES_VERSION}/main /data/postgresql/
-rm -rf /var/lib/postgresql/$${POSTGRES_VERSION}/main
-ln -s /data/postgresql/main /var/lib/postgresql/$${POSTGRES_VERSION}/main
-chown -R postgres:postgres /data/postgresql
-systemctl start postgresql
+# Find the data disk (not the OS disk /dev/sda)
+DATA_DISK=$(lsblk -dpno NAME,SIZE,TYPE | grep disk | grep -v "$(df / | tail -1 | awk '{print $1}' | sed 's/[0-9]*$//')" | awk '{print $1}' | tail -1)
 
+if [ -z "$DATA_DISK" ]; then
+    echo "WARNING: No data disk found. Using OS disk for PostgreSQL data."
+    mkdir -p /data
+else
+    echo "[+] Data disk found: $DATA_DISK"
+    mkdir -p /data
+    
+    # Only format if not already has a filesystem
+    if ! blkid "$DATA_DISK" > /dev/null 2>&1; then
+        echo "[+] Formatting data disk..."
+        mkfs -t ext4 "$DATA_DISK"
+    else
+        echo "[+] Data disk already formatted, skipping mkfs."
+    fi
+    
+    # Only add to fstab if not already there
+    if ! grep -q "$DATA_DISK" /etc/fstab; then
+        echo "$DATA_DISK /data ext4 defaults,nofail 0 2" >> /etc/fstab
+        echo "[+] Added to /etc/fstab."
+    fi
+    
+    # Mount (idempotent — safe to run multiple times)
+    mount "$DATA_DISK" /data || true
+fi
+
+#################################
+# Move PostgreSQL data to data disk (idempotent)
+#################################
+echo "[+] Setting up PostgreSQL on data disk..."
+
+PG_DATA_DIR="/data/postgresql"
+PG_LINK="/var/lib/postgresql/$${POSTGRES_VERSION}/main"
+
+# Only move if not already moved
+if [ ! -L "$PG_LINK" ] || [ "$(readlink -f "$PG_LINK")" != "$PG_DATA_DIR" ]; then
+    systemctl stop postgresql
+    
+    mkdir -p "$PG_DATA_DIR"
+    
+    # Only copy if data dir is empty
+    if [ -z "$(ls -A "$PG_DATA_DIR" 2>/dev/null)" ]; then
+        echo "[+] Copying PostgreSQL data..."
+        cp -a /var/lib/postgresql/$${POSTGRES_VERSION}/main/* "$PG_DATA_DIR/" 2>/dev/null || true
+    fi
+    
+    rm -rf "$PG_LINK"
+    ln -s "$PG_DATA_DIR" "$PG_LINK"
+    chown -R postgres:postgres /data/postgresql
+    chmod 700 "$PG_DATA_DIR"
+    
+    systemctl start postgresql
+    echo "[+] PostgreSQL data moved."
+else
+    echo "[+] PostgreSQL already on data disk, skipping."
+fi
 #################################
 # Clone & Setup App
 #################################
