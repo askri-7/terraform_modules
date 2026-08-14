@@ -116,105 +116,76 @@ if ! pg_isready -q; then
   exit 1
 fi
 
-#################################
-# Mount Data Disk (idempotent)
+################################
+# Mount Data Disk Directly to PostgreSQL
 #################################
 echo "[+] Checking data disk..."
 
-# Find the data disk (not the OS disk /dev/sda)
 DATA_DISK=$(lsblk -dpno NAME,SIZE,TYPE | grep disk | grep -v "$(df / | tail -1 | awk '{print $1}' | sed 's/[0-9]*$//')" | awk '{print $1}' | tail -1)
+
+PG_DIR="/var/lib/postgresql/$${POSTGRES_VERSION}/main"
 
 if [ -z "$DATA_DISK" ]; then
     echo "WARNING: No data disk found. Using OS disk for PostgreSQL data."
-    mkdir -p /data
 else
     echo "[+] Data disk found: $DATA_DISK"
-    mkdir -p /data
-    
-    # Only format if not already has a filesystem
+
+    # Format only if brand new
     if ! blkid "$DATA_DISK" > /dev/null 2>&1; then
         echo "[+] Formatting data disk..."
         mkfs -t ext4 "$DATA_DISK"
-    else
-        echo "[+] Data disk already formatted, skipping mkfs."
     fi
-    
-    # Only add to fstab if not already there
-    if ! grep -q "$DATA_DISK" /etc/fstab; then
-        echo "$DATA_DISK /data ext4 defaults,nofail 0 2" >> /etc/fstab
-        echo "[+] Added to /etc/fstab."
-    fi
-    
-    # Mount (idempotent — safe to run multiple times)
-    mount "$DATA_DISK" /data || true
-fi
 
-#################################
-# Move PostgreSQL data to data disk (idempotent)
-#################################
-echo "[+] Setting up PostgreSQL on data disk..."
-
-PG_DATA_DIR="/data/postgresql"
-PG_ORIG_DIR="/var/lib/postgresql/$${POSTGRES_VERSION}/main"
-
-# Check if already bind-mounted
-if ! mountpoint -q "$PG_ORIG_DIR" 2>/dev/null; then
-    echo "[+] Stopping PostgreSQL for data migration..."
+    # Stop PostgreSQL before touching its home
     systemctl stop postgresql
-    
-    mkdir -p "$PG_DATA_DIR"
-    
-    # Only copy if data dir is empty (including hidden files)
-    if [ -z "$(ls -A "$PG_DATA_DIR" 2>/dev/null)" ]; then
-        echo "[+] Copying PostgreSQL data to data disk..."
-        cp -a "$PG_ORIG_DIR"/. "$PG_DATA_DIR/" 2>/dev/null || true
+
+    # If the data is still sitting on the OS disk, move it aside temporarily
+    if [ -d "$PG_DIR" ] && [ -z "$(findmnt -n -o FSTYPE "$PG_DIR" 2>/dev/null)" ]; then
+        echo "[+] Backing up original data..."
+        mv "$PG_DIR" "$PG_DIR.backup"
+        mkdir -p "$PG_DIR"
     fi
-    
-    chown -R postgres:postgres /data/postgresql
-    chmod 700 "$PG_DATA_DIR"
-    
-    # Use bind mount instead of symlink — systemd-friendly and transparent to Postgres
-    mount --bind "$PG_DATA_DIR" "$PG_ORIG_DIR"
-    
-    # Persist bind mount in fstab
-    if ! grep -q "$PG_DATA_DIR.*$PG_ORIG_DIR.*bind" /etc/fstab; then
-        echo "$PG_DATA_DIR $PG_ORIG_DIR none bind,nofail 0 2" >> /etc/fstab
+
+    # Mount the data disk directly into PostgreSQL's expected path
+    if ! findmnt -n -o FSTYPE "$PG_DIR" > /dev/null 2>&1; then
+        echo "[+] Mounting data disk to $PG_DIR..."
+        mount "$DATA_DISK" "$PG_DIR"
+
+        if ! grep -q "$DATA_DISK.*$PG_DIR" /etc/fstab; then
+            echo "$DATA_DISK $PG_DIR ext4 defaults,nofail 0 2" >> /etc/fstab
+        fi
     fi
-    
+
+    # If the mounted disk is empty, copy the original data into it
+    if [ -d "$PG_DIR.backup" ] && [ -z "$(ls -A "$PG_DIR" 2>/dev/null)" ]; then
+        echo "[+] Copying PostgreSQL data onto data disk..."
+        cp -a "$PG_DIR.backup"/. "$PG_DIR/"
+        rm -rf "$PG_DIR.backup"
+    fi
+
+    # Fix ownership
+    chown -R postgres:postgres "$PG_DIR"
+    chmod 700 "$PG_DIR"
+
+    # Start and verify
     echo "[+] Starting PostgreSQL..."
     systemctl start postgresql
-    
-    echo "[+] Waiting for PostgreSQL to be ready after data move..."
-    for i in {1..30}; do
-      if pg_isready -q; then
-        echo "[+] PostgreSQL is ready."
-        break
-      fi
-      echo "  ...waiting ($i/30)"
-      sleep 1
-    done
-    
-    if ! pg_isready -q; then
-      echo "ERROR: PostgreSQL failed to start after data move"
-      journalctl -u postgresql -n 50
-      exit 1
-    fi
-    
-    echo "[+] PostgreSQL data moved successfully."
-else
-    echo "[+] PostgreSQL already on data disk."
-    systemctl start postgresql || true
-    
-    for i in {1..30}; do
-      if pg_isready -q; then
-        echo "[+] PostgreSQL is ready."
-        break
-      fi
-      echo "  ...waiting ($i/30)"
-      sleep 1
-    done
-fi
 
+    for i in {1..30}; do
+        if pg_isready -q; then
+            echo "[+] PostgreSQL is ready."
+            break
+        fi
+        echo "  ...waiting ($i/30)"
+        sleep 1
+    done
+
+    if ! pg_isready -q; then
+        echo "ERROR: PostgreSQL failed to start"
+        journalctl -u postgresql@$${POSTGRES_VERSION}-main -n 50
+        exit 1
+    fi
+fi
 #################################
 # Clone & Setup App
 #################################
