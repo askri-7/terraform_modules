@@ -39,20 +39,20 @@ apt-get install -y certbot python3-certbot-nginx
 #################################
 # Install Node.js
 #################################
-echo "[+] Installing Node.js ${NODE_MAJOR_VERSION}..."
-curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR_VERSION}.x | bash -
+echo "[+] Installing Node.js $${NODE_MAJOR_VERSION}..."
+curl -fsSL https://deb.nodesource.com/setup_$${NODE_MAJOR_VERSION}.x | bash -
 apt-get install -y nodejs
 npm install -g pm2
 
 #################################
 # Install PostgreSQL
 #################################
-echo "[+] Installing PostgreSQL ${POSTGRES_VERSION}..."
+echo "[+] Installing PostgreSQL $${POSTGRES_VERSION}..."
 curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql.gpg
 echo "deb [signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
   > /etc/apt/sources.list.d/postgresql.list
 apt-get update
-apt-get install -y postgresql-${POSTGRES_VERSION} postgresql-client-${POSTGRES_VERSION}
+apt-get install -y postgresql-$${POSTGRES_VERSION} postgresql-client-$${POSTGRES_VERSION}
 systemctl enable postgresql
 systemctl start postgresql
 
@@ -68,7 +68,7 @@ GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user};
 ALTER ROLE ${db_user} CREATEDB;
 EOF
 
-cat > /etc/postgresql/${POSTGRES_VERSION}/main/conf.d/99-custom.conf <<'PGCONF'
+cat > /etc/postgresql/$${POSTGRES_VERSION}/main/conf.d/99-custom.conf <<'PGCONF'
 shared_buffers = 256MB
 effective_cache_size = 1GB
 work_mem = 16MB
@@ -84,15 +84,15 @@ systemctl restart postgresql
 echo "[+] Mounting data disk..."
 DATA_DISK=$(lsblk -dpno NAME,SIZE,TYPE | grep disk | awk '{print $1}' | tail -1)
 mkdir -p /data
-mkfs -t ext4 ${DATA_DISK} || true
-mount ${DATA_DISK} /data || true
-echo "${DATA_DISK} /data ext4 defaults,nofail 0 2" >> /etc/fstab
+mkfs -t ext4 $${DATA_DISK} || true
+mount $${DATA_DISK} /data || true
+echo "$${DATA_DISK} /data ext4 defaults,nofail 0 2" >> /etc/fstab
 
 systemctl stop postgresql
 mkdir -p /data/postgresql
-cp -a /var/lib/postgresql/${POSTGRES_VERSION}/main /data/postgresql/
-rm -rf /var/lib/postgresql/${POSTGRES_VERSION}/main
-ln -s /data/postgresql/main /var/lib/postgresql/${POSTGRES_VERSION}/main
+cp -a /var/lib/postgresql/$${POSTGRES_VERSION}/main /data/postgresql/
+rm -rf /var/lib/postgresql/$${POSTGRES_VERSION}/main
+ln -s /data/postgresql/main /var/lib/postgresql/$${POSTGRES_VERSION}/main
 chown -R postgres:postgres /data/postgresql
 systemctl start postgresql
 
@@ -101,8 +101,8 @@ systemctl start postgresql
 #################################
 echo "[+] Cloning application..."
 APP_DIR="/opt/secure-login-demo"
-mkdir -p ${APP_DIR}
-cd ${APP_DIR}
+mkdir -p $${APP_DIR}
+cd $${APP_DIR}
 
 git clone -b ${app_branch} ${app_repo_url} .
 cd backend
@@ -111,7 +111,7 @@ cd backend
 # Write .env File
 #################################
 echo "[+] Writing environment configuration..."
-cat > ${APP_DIR}/backend/.env <<'ENVFILE'
+cat > $${APP_DIR}/backend/.env <<'ENVFILE'
 NODE_ENV=${node_env}
 PORT=${app_port}
 FRONTEND_URL=${frontend_url}
@@ -135,8 +135,8 @@ GOOGLE_CLIENT_SECRET=${google_client_secret}
 GOOGLE_CALLBACK_URL=${google_callback_url}
 ENVFILE
 
-chmod 600 ${APP_DIR}/backend/.env
-chown root:root ${APP_DIR}/backend/.env
+chmod 600 $${APP_DIR}/backend/.env
+chown root:root $${APP_DIR}/backend/.env
 
 #################################
 # Build & Deploy App
@@ -160,7 +160,7 @@ npm run build
 # Build & Deploy Frontend
 #################################
 echo "[+] Building frontend..."
-cd ${APP_DIR}/frontend
+cd $${APP_DIR}/frontend
 
 export VITE_API_URL="/api"
 npm ci
@@ -168,21 +168,21 @@ npm run build
 
 echo "[+] Deploying frontend to Nginx webroot..."
 rm -rf /usr/share/nginx/html/*
-cp -r ${APP_DIR}/frontend/dist/* /usr/share/nginx/html/
+cp -r $${APP_DIR}/frontend/dist/* /usr/share/nginx/html/
 chown -R www-data:www-data /usr/share/nginx/html
 
 #################################
-# Prune devDependencies
+# Prune build-only dependencies
 #################################
 echo "[+] Pruning devDependencies..."
-cd ${APP_DIR}/backend
+cd $${APP_DIR}/backend
 npm prune --omit=dev
-rm -rf ${APP_DIR}/frontend/node_modules
+rm -rf $${APP_DIR}/frontend/node_modules
 
 #################################
-# Configure Nginx (HTTP only first, for Certbot)
+# Configure Nginx (HTTP only first)
 #################################
-echo "[+] Starting Nginx on HTTP for Certbot validation..."
+echo "[+] Configuring Nginx..."
 cat > /etc/nginx/sites-available/default <<'NGINX'
 server {
     listen 80;
@@ -209,6 +209,7 @@ server {
     location /health {
         proxy_pass http://127.0.0.1:${app_port};
         proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
     }
 }
 NGINX
@@ -221,23 +222,22 @@ systemctl start nginx
 #################################
 echo "[+] Obtaining SSL certificate for ${domain_name}..."
 
-# Wait a few seconds for DNS to be ready
-sleep 10
+# Wait for DNS to be ready
+sleep 15
 
-# Run certbot non-interactively
 certbot --nginx \
   -d ${domain_name} \
   --non-interactive \
   --agree-tos \
   --email ${admin_email} \
   --redirect \
-  || echo "WARNING: Certbot failed. Check DNS propagation and run manually."
+  || echo "WARNING: Certbot failed. SSL not configured. Run manually: sudo certbot --nginx -d ${domain_name}"
 
 #################################
 # Start App with PM2
 #################################
 echo "[+] Starting application with PM2..."
-cd ${APP_DIR}/backend
+cd $${APP_DIR}/backend
 pm2 start dist/src/main.js --name "secure-login-demo"
 pm2 startup systemd -u root --hp /root
 pm2 save
@@ -256,7 +256,7 @@ shred -u /var/log/cloud-init-output.log 2>/dev/null || true
 echo "================================"
 echo " Deployment Complete"
 echo "================================"
-echo "App: ${APP_DIR}"
+echo "App: $${APP_DIR}"
 echo "Domain: https://${domain_name}"
 echo "Health: https://${domain_name}/health/live"
 pm2 status
