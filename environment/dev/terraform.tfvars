@@ -156,7 +156,8 @@ db_statement_timeout = 30000
 db_user = "webapp_user"
 
 # App config
-node_env     = "production"
+#node_env     = "production"
+node_env = "dev"
 app_port     = 3000
 frontend_url = "https://20.111.18.168"
 db_name      = "secure_login_db"
@@ -169,8 +170,8 @@ google_client_id    = "508085257923-vtuio6f4qchko8beu3l9jkt905hgq33k.apps.google
 google_callback_url = "https://20.111.18.168/auth/google/callback"
 
 # Admin
-admin_email = "askriisra0@gmail.com"
+
 
 # App repo
 app_repo_url = "https://github.com/askri-7/secure-login-demo.git"
-app_branch   = "behind"  
+app_branch   = "main"  
