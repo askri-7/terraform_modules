@@ -165,10 +165,10 @@ db_name      = "secure_login_db"
 
 # OAuth public IDs (not secrets)
 github_client_id    = "Ov23liRZBFLPUkz5iiUz"
-github_callback_url = "https://secure-logy.francecentral.cloudapp.azure.com/auth/github/callback"
+github_callback_url = "https://secure-logy.francecentral.cloudapp.azure.com/api/auth/github/callback"
 
 google_client_id    = "508085257923-vtuio6f4qchko8beu3l9jkt905hgq33k.apps.googleusercontent.com"
-google_callback_url = "https://secure-logy.francecentral.cloudapp.azure.com/auth/google/callback"
+google_callback_url = "https://secure-logy.francecentral.cloudapp.azure.com/api/auth/google/callback"
 
 # Admin
 
