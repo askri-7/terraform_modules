@@ -2,7 +2,7 @@
 
 > **Branch:** `release/1vm`  
 > **Purpose:** Provision a single Azure VM that runs the entire application stack (Nginx, Node.js, PostgreSQL) via cloud-init.  
-> **Application:** [`secure-login-demo`](https://github.com/askri-7/secure-login-demo)
+> **Application:** this is the app repo => [`secure-login-demo`](https://github.com/askri-7/secure-login-demo)
 
 ---
 
@@ -19,7 +19,6 @@ This is the simplest possible production-grade setup: one server, one database, 
 ```
 .
 ├── documentation/          # Architecture docs
-├── app /                   # secure login system demo
 ├── environment/            # Root configs per environment (calls modules)
 │   ├── dev/
     ├── qa/
