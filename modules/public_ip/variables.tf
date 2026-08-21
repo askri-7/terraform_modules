@@ -17,3 +17,8 @@ variable "location" {
 variable "pip_name" {
   type = string
 }
+
+variable "label" {
+  type= string
+  
+}

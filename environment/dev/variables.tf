@@ -150,4 +150,31 @@ variable "private_dns" {
   type = string
 }
 
+variable "jwt_secret" {
+  type = string
+  sensitive = true
+}
+variable "db_password" {
+  type = string
+  sensitive = true
+
+  
+}
+
+variable "admin_password"{
+  type = string
+  sensitive = true
+}
+
+variable "github_client_secret" {
+  type = string
+  sensitive = true
+
+}
+
+variable "google_client_secret" {
+  type = string
+  sensitive = true
+  
+}
 
