@@ -1,11 +1,24 @@
 variable "resource_group_name" {
-     type = string
-} 
+  type = string
+}
+# key is the public ip name
+variable "pip_allocation" {
+  type= string
+}
+variable "pip_sku" {
+  type = string
+}
+variable "tags" {
+  type = map(string)
+}
+variable "location" {
+  type = string
+}
+variable "pip_name" {
+  type = string
+}
 
-variable "pub_ips" {
-     type = map(object({
-     public_ip_location = string
-     allocation= string
-     }))
-    description = "needed public ips"
+variable "label" {
+  type= string
+  
 }

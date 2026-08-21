@@ -1,0 +1,158 @@
+#
+name: Terraform CI/CD Pipeline
+
+on:
+  push:
+    branches: [release/multi-vm]
+  pull_request:
+    branches: [release/multi-vm]
+  workflow_dispatch:
+
+env:
+  TF_WORKING_DIR: "environment/dev/"          
+  TF_VERSION: "1.15.7"
+
+
+permissions:
+  contents: read
+  pull-requests: write   
+  id-token: write      # needed if you want checkov/tflint to comment on PRs
+
+jobs:
+
+  # ---------------------------------------------------------------------
+  # STAGE 1 - Static / Security Analysis
+  # ---------------------------------------------------------------------
+  static-analysis:
+    name: "Stage 1 - Security & Lint Checks"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # gitleaks needs full history to scan commits properly
+
+      # --- Gitleaks: secret scanning ---
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}   # only required for org/enterprise use
+
+      # --- Checkov: IaC security/compliance scanning ---
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ${{ env.TF_WORKING_DIR }}
+          framework: terraform
+          output_format: cli
+          soft_fail: false        
+          skip_check: CKV_AZURE_50, CKV_AZURE_160 , CKV_AZURE_10 ,CKV_AZURE_93,CKV2_AZURE_39,CKV2_AZURE_57 , CKV_AZURE_136 # configure redirection later in ngnix
+
+      # --- TFLint: Terraform linting ---
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Init TFLint
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: tflint --init
+
+      - name: Run TFLint
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: tflint -f compact
+
+  # ---------------------------------------------------------------------
+  # STAGE 2 - Terraform Init & Plan
+  # ---------------------------------------------------------------------
+  terraform-plan:
+    name: "Stage 2 - Terraform Plan"
+    runs-on: ubuntu-latest
+    needs: static-analysis
+    outputs:
+      plan-exitcode: ${{ steps.plan.outputs.exitcode }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+     
+      - name: Azure Login using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID_V2 }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+     
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        env:
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+          TF_VAR_postgresql_administrator_password: ${{ secrets.POTGRESQL_ADMINISTRATOR_PASSWORD }}
+          TF_VAR_postgresql_administrator_login: ${{ secrets.POSTGRESQL_ADMINISTRATOR_LOGIN }}
+          
+
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: ${{ env.TF_WORKING_DIR }}/tfplan
+          retention-days: 5
+
+  # ---------------------------------------------------------------------
+  # STAGE 3 - Terraform Apply (Manual Approval Required)
+  # ---------------------------------------------------------------------
+  terraform-apply:
+    name: "Stage 3 - Terraform Apply"
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    environment:
+      name: dev        # <-- this environment must have "required reviewers" set in repo settings
+    steps:             # no required reviewers set yet /public repo needed
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+     
+      - name: Azure Login using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID_V2 }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init -input=false
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform Apply
+        env:
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+          TF_VAR_postgresql_administrator_password: ${{ secrets.POTGRESQL_ADMINISTRATOR_PASSWORD }}
+          TF_VAR_postgresql_administrator_login: ${{ secrets.POSTGRESQL_ADMININSTRATOR_LOGIN }}
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply -input=false -auto-approve tfplan
