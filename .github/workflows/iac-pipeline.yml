@@ -96,6 +96,7 @@ jobs:
           TF_VAR_google_client_id: ${{ secrets.TF_VAR_GOOGLE_CLIENT_ID }}
           TF_VAR_google_client_secret: ${{ secrets.TF_VAR_GOOGLE_CLIENT_SECRET }}
           TF_VAR_smtp_pass: ${{ secrets.TF_VAR_SMTP_PASS }}
+          TF_VAR_dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform plan -input=false -out=tfplan
 
@@ -150,5 +151,6 @@ jobs:
           TF_VAR_google_client_id: ${{ secrets.TF_VAR_GOOGLE_CLIENT_ID }}
           TF_VAR_google_client_secret: ${{ secrets.TF_VAR_GOOGLE_CLIENT_SECRET }}
           TF_VAR_smtp_pass: ${{ secrets.TF_VAR_SMTP_PASS }}
+          TF_VAR_dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform apply -input=false tfplan
