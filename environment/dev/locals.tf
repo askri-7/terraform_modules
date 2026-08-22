@@ -7,4 +7,5 @@ locals {
   api_url             = "https://${var.domain_name}/api"
   github_callback_url = "https://${var.domain_name}/api/auth/github/callback"
   google_callback_url = "https://${var.domain_name}/api/auth/google/callback"
+  database_url        = "postgresql://${var.db_user}:${var.db_password}@db:5432/${var.db_name}"
 }

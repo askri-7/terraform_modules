@@ -33,23 +33,10 @@ resource "azurerm_key_vault_access_policy" "terraform_runner" {
 }
 
 # ── Store Secrets ──
-resource "azurerm_key_vault_secret" "db_password" {
-  name         = "db-password"
-  value        = var.db_password
-  key_vault_id = azurerm_key_vault.app.id
-  depends_on   = [azurerm_key_vault_access_policy.vm]
-}
 
 resource "azurerm_key_vault_secret" "jwt_secret" {
   name         = "jwt-secret"
   value        = var.jwt_secret
-  key_vault_id = azurerm_key_vault.app.id
-  depends_on   = [azurerm_key_vault_access_policy.vm]
-}
-
-resource "azurerm_key_vault_secret" "admin_password" {
-  name         = "admin-password"
-  value        = var.admin_password
   key_vault_id = azurerm_key_vault.app.id
   depends_on   = [azurerm_key_vault_access_policy.vm]
 }
@@ -68,19 +55,6 @@ resource "azurerm_key_vault_secret" "google_client_secret" {
   depends_on   = [azurerm_key_vault_access_policy.vm]
 }
 
-resource "azurerm_key_vault_secret" "admin_email" {
-  name         = "admin-email"
-  value        = var.admin_email
-  key_vault_id = azurerm_key_vault.app.id
-  depends_on   = [azurerm_key_vault_access_policy.vm]
-}
-
-resource "azurerm_key_vault_secret" "db_user" {
-  name         = "db-user"
-  value        = var.db_user
-  key_vault_id = azurerm_key_vault.app.id
-  depends_on   = [azurerm_key_vault_access_policy.vm]
-}
 
 resource "azurerm_key_vault_secret" "smtp_pass" {
   name         = "smtp-pass"
@@ -88,3 +62,44 @@ resource "azurerm_key_vault_secret" "smtp_pass" {
   key_vault_id = azurerm_key_vault.app.id
   depends_on   = [azurerm_key_vault_access_policy.vm]
 }
+resource "azurerm_key_vault_secret" "database_url" {
+  name         = "database-url"
+  value        = local.database_url
+  key_vault_id = azurerm_key_vault.app.id
+  depends_on   = [azurerm_key_vault_access_policy.vm]
+}
+
+
+
+
+
+/*
+
+resource "azurerm_key_vault_secret" "admin_password" {
+  name         = "admin-password"
+  value        = var.admin_password
+  key_vault_id = azurerm_key_vault.app.id
+  depends_on   = [azurerm_key_vault_access_policy.vm]
+}
+
+resource "azurerm_key_vault_secret" "admin_email" {
+  name         = "admin-email"
+  value        = var.admin_email
+  key_vault_id = azurerm_key_vault.app.id
+  depends_on   = [azurerm_key_vault_access_policy.vm]
+}
+resource "azurerm_key_vault_secret" "db_user" {
+  name         = "db-user"
+  value        = var.db_user
+  key_vault_id = azurerm_key_vault.app.id
+  depends_on   = [azurerm_key_vault_access_policy.vm]
+}
+
+
+resource "azurerm_key_vault_secret" "db_password" {
+  name         = "db-password"
+  value        = var.db_password
+  key_vault_id = azurerm_key_vault.app.id
+  depends_on   = [azurerm_key_vault_access_policy.vm]
+}
+*/
