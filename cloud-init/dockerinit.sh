@@ -77,6 +77,95 @@ ADMIN_PASSWORD=${admin_password}
 POSTGRES_PASSWORD=${db_password}
 EOF
 chmod 644 "$${APP_DIR}/.env"
+#################################
+# Write docker-compose.prod.yml
+#################################
+echo "[+] Writing docker-compose.prod.yml..."
+cat > "$${APP_DIR}/docker-compose.prod.yml" <<COMPOSE
+services:
+  frontend:
+    image: ${dockerhub_username}/secure-login-demo-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"
+    environment:
+      BACKEND_HOST: backend
+      BACKEND_PORT: "3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  backend:
+    image: ${dockerhub_username}/secure-login-demo-backend:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      AZURE_KEY_VAULT_URL: $${AZURE_KEY_VAULT_URL}
+      NODE_ENV: production
+      PORT: 3000
+      FRONTEND_URL: $${FRONTEND_URL}
+      API_URL: $${API_URL}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: $${DB_NAME}
+      DB_POOL_MAX: $${DB_POOL_MAX}
+      DB_TIMEOUT: $${DB_TIMEOUT}
+      DB_IDLE_TIMEOUT: $${DB_IDLE_TIMEOUT}
+      DB_STATEMENT_TIMEOUT: $${DB_STATEMENT_TIMEOUT}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      GITHUB_CLIENT_ID: $${GITHUB_CLIENT_ID}
+      GITHUB_CALLBACK_URL: $${GITHUB_CALLBACK_URL}
+      GOOGLE_CLIENT_ID: $${GOOGLE_CLIENT_ID}
+      GOOGLE_CALLBACK_URL: $${GOOGLE_CALLBACK_URL}
+      SMTP_HOST: $${SMTP_HOST}
+      SMTP_PORT: $${SMTP_PORT}
+      SMTP_FROM: $${SMTP_FROM}
+      ADMIN_EMAIL: $${ADMIN_EMAIL}
+      ADMIN_PASSWORD: $${ADMIN_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get({host:'127.0.0.1',port:process.env.PORT||3000,path:'/health/live',timeout:3000},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: $${DB_USER}
+      POSTGRES_PASSWORD: $${POSTGRES_PASSWORD}
+      POSTGRES_DB: $${DB_NAME}
+    volumes:
+      - /var/lib/docker/volumes/postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \\$\\$POSTGRES_USER -d \\$\\$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - /var/lib/docker/volumes/redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+COMPOSE
 
 #################################
 # Delete secrets from shell memory

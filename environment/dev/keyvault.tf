@@ -1,8 +1,11 @@
+
+
+# ── Data source for current Azure tenant ──
 data "azurerm_client_config" "current" {}
 
 # ── Key Vault ──
 resource "azurerm_key_vault" "app" {
-  name                = "${var.naming.project}-${var.naming.environment}-kv"
+  name                = "${var.naming.project}-${var.naming.environment}-keyv"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.rg.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
@@ -11,6 +14,7 @@ resource "azurerm_key_vault" "app" {
   purge_protection_enabled   = false
   soft_delete_retention_days = 7
 }
+
 
 # ── Key Vault Access Policy: VM reads secrets ──
 resource "azurerm_key_vault_access_policy" "vm" {
@@ -25,7 +29,7 @@ resource "azurerm_key_vault_access_policy" "vm" {
   }
 }
 
-# ── Key Vault Access Policy: Terraform runner (GitHub Actions) creates secrets ──
+# ── Key Vault Access Policy: GitHub Actions (Terraform runner) ──
 resource "azurerm_key_vault_access_policy" "terraform_runner" {
   key_vault_id = azurerm_key_vault.app.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
@@ -38,38 +42,83 @@ resource "azurerm_key_vault_access_policy" "terraform_runner" {
   }
 }
 
-# ── Store Secrets ──
-resource "azurerm_key_vault_secret" "database_url" {
-  name         = "database-url"
-  value        = local.database_url
+# ── Key Vault Access Policy: Local developer (whoever runs terraform locally) ──
+resource "azurerm_key_vault_access_policy" "current_user" {
   key_vault_id = azurerm_key_vault.app.id
-  depends_on   = [azurerm_key_vault_access_policy.vm, azurerm_key_vault_access_policy.terraform_runner]
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = data.azurerm_client_config.current.object_id
+
+  secret_permissions = ["Get", "List", "Set", "Delete", "Purge"]
 }
+
+
 
 resource "azurerm_key_vault_secret" "jwt_secret" {
   name         = "jwt-secret"
   value        = var.jwt_secret
   key_vault_id = azurerm_key_vault.app.id
-  depends_on   = [azurerm_key_vault_access_policy.vm, azurerm_key_vault_access_policy.terraform_runner]
+  depends_on   = [azurerm_key_vault_access_policy.vm]
 }
 
 resource "azurerm_key_vault_secret" "github_client_secret" {
   name         = "github-client-secret"
   value        = var.github_client_secret
   key_vault_id = azurerm_key_vault.app.id
-  depends_on   = [azurerm_key_vault_access_policy.vm, azurerm_key_vault_access_policy.terraform_runner]
+  depends_on   = [azurerm_key_vault_access_policy.vm]
 }
 
 resource "azurerm_key_vault_secret" "google_client_secret" {
   name         = "google-client-secret"
   value        = var.google_client_secret
   key_vault_id = azurerm_key_vault.app.id
-  depends_on   = [azurerm_key_vault_access_policy.vm, azurerm_key_vault_access_policy.terraform_runner]
+  depends_on   = [azurerm_key_vault_access_policy.vm]
 }
+
 
 resource "azurerm_key_vault_secret" "smtp_pass" {
   name         = "smtp-pass"
   value        = var.smtp_pass
   key_vault_id = azurerm_key_vault.app.id
-  depends_on   = [azurerm_key_vault_access_policy.vm, azurerm_key_vault_access_policy.terraform_runner]
+  depends_on   = [azurerm_key_vault_access_policy.vm]
 }
+resource "azurerm_key_vault_secret" "database_url" {
+  name         = "database-url"
+  value        = local.database_url
+  key_vault_id = azurerm_key_vault.app.id
+  depends_on   = [azurerm_key_vault_access_policy.vm]
+}
+
+
+
+
+
+/*
+
+resource "azurerm_key_vault_secret" "admin_password" {
+  name         = "admin-password"
+  value        = var.admin_password
+  key_vault_id = azurerm_key_vault.app.id
+  depends_on   = [azurerm_key_vault_access_policy.vm]
+}
+
+resource "azurerm_key_vault_secret" "admin_email" {
+  name         = "admin-email"
+  value        = var.admin_email
+  key_vault_id = azurerm_key_vault.app.id
+  depends_on   = [azurerm_key_vault_access_policy.vm]
+}
+resource "azurerm_key_vault_secret" "db_user" {
+  name         = "db-user"
+  value        = var.db_user
+  key_vault_id = azurerm_key_vault.app.id
+  depends_on   = [azurerm_key_vault_access_policy.vm]
+}
+
+
+resource "azurerm_key_vault_secret" "db_password" {
+  name         = "db-password"
+  value        = var.db_password
+  key_vault_id = azurerm_key_vault.app.id
+  depends_on   = [azurerm_key_vault_access_policy.vm]
+}
+*/
