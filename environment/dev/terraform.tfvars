@@ -144,37 +144,28 @@ tags = {
   "owner"       = "tmtrack"
   costcenter    = "internshsip"
 }
-cloud_init_path = "../../cloud-init/webapp.sh"
+cloud_init_path = "../../cloud-init/dockerinit.sh"
 
 
-# Database connection tuning
+# ═══════════════════════════════════════════════════════════
+# APP CONFIG (non-sensitive)
+# ═══════════════════════════════════════════════════════════
+
+node_env     = "production"
+app_port     = 3000
+domain_name  = "secure-logy.francecentral.cloudapp.azure.com"
+db_name      = "secure_login_db"
+db_user      = "secure_login_app"
+app_repo_url = "https://github.com/askri-7/secure-login-demo.git"
+app_branch   = "main"
+
+# Database tuning
 db_pool_max          = 20
 db_timeout           = 10000
 db_idle_timeout      = 30000
 db_statement_timeout = 30000
 
-# Database user (non-sensitive)
-db_user = "webapp_user"
-
-# App config
-#node_env     = "production"
-node_env = "dev"
-app_port     = 3000
-frontend_url = "https://secure-logy.francecentral.cloudapp.azure.com"
-db_name      = "secure_login_db"
-
-# OAuth public IDs (not secrets)
-github_client_id    = "Ov23liRZBFLPUkz5iiUz"
-github_callback_url = "https://secure-logy.francecentral.cloudapp.azure.com/api/auth/github/callback"
-
-google_client_id    = "508085257923-vtuio6f4qchko8beu3l9jkt905hgq33k.apps.googleusercontent.com"
-google_callback_url = "https://secure-logy.francecentral.cloudapp.azure.com/api/auth/google/callback"
-
-# Admin
-
-
-# App repo
-app_repo_url = "https://github.com/askri-7/secure-login-demo.git"
-app_branch   = "main"  
-
-domain_name = "secure-logy.francecentral.cloudapp.azure.com"
+# email verification
+smtp_host= "smtp.gmail.com"
+smtp_port= 465
+smtp_from = "askriisra@gmail.com"

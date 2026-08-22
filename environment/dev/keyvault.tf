@@ -24,6 +24,13 @@ resource "azurerm_key_vault_access_policy" "vm" {
 
   secret_permissions = ["Get", "List"]
 }
+resource "azurerm_key_vault_access_policy" "terraform_runner" {
+  key_vault_id = azurerm_key_vault.app.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = data.azurerm_client_config.current.object_id
+
+  secret_permissions = ["Get", "List", "Set", "Delete", "Purge"]
+}
 
 # ── Store Secrets ──
 resource "azurerm_key_vault_secret" "db_password" {
@@ -69,9 +76,15 @@ resource "azurerm_key_vault_secret" "admin_email" {
 }
 
 resource "azurerm_key_vault_secret" "db_user" {
-  name         = "db_user"
+  name         = "db-user"
   value        = var.db_user
   key_vault_id = azurerm_key_vault.app.id
   depends_on   = [azurerm_key_vault_access_policy.vm]
 }
 
+resource "azurerm_key_vault_secret" "smtp_pass" {
+  name         = "smtp-pass"
+  value        = var.smtp_pass
+  key_vault_id = azurerm_key_vault.app.id
+  depends_on   = [azurerm_key_vault_access_policy.vm]
+}

@@ -66,30 +66,42 @@ module "vm" {
 
   ### custum config
 
-cloud_init = base64encode(templatefile(var.cloud_init_path, {
-    domain_name          = var.domain_name
-    node_env             = var.node_env
-    app_port             = var.app_port
-    frontend_url         = var.frontend_url
+  cloud_init = base64encode(templatefile(var.cloud_init_path, {
+    
+    domain_name = var.domain_name
+
+  
+    node_env = var.node_env
+    app_port = var.app_port
+
+    
+    frontend_url        = local.frontend_url
+    api_url             = local.api_url
+    github_callback_url = local.github_callback_url
+    google_callback_url = local.google_callback_url
+
     db_name              = var.db_name
     db_user              = var.db_user
-    db_password          = var.db_password
     db_pool_max          = var.db_pool_max
     db_timeout           = var.db_timeout
     db_idle_timeout      = var.db_idle_timeout
     db_statement_timeout = var.db_statement_timeout
-    github_client_id     = var.github_client_id
-    github_client_secret = var.github_client_secret
-    github_callback_url  = var.github_callback_url
-    google_client_id     = var.google_client_id
-    google_client_secret = var.google_client_secret
-    google_callback_url  = var.google_callback_url
-    admin_email          = var.admin_email
-    admin_password       = var.admin_password
-    jwt_secret           = var.jwt_secret
-    app_repo_url         = var.app_repo_url
-    app_branch           = var.app_branch
+    
+    github_client_id = var.github_client_id
+    google_client_id = var.google_client_id
+    
+    key_vault_url  = azurerm_key_vault.app.vault_uri
+    key_vault_name = azurerm_key_vault.app.name
+    smtp_host = var.smtp_host
+    smtp_port = var.smtp_port
+    smtp_from = var.smtp_from
+    admin_email = var.admin_email
+    app_repo_url = var.app_repo_url
+    app_branch   = var.app_branch
   }))
+
+  # ... rest unchanged
+
   ###  nic 
 
   nic_vars = {

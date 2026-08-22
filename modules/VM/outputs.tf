@@ -28,9 +28,8 @@ output "location" {
   description = "The Azure region of the VM + NIC"
   value       = azurerm_linux_virtual_machine.vm.location
 }
-/*
+
 output "principal_id" {
   description = "System-assigned managed identity principal ID"
   value       = azurerm_linux_virtual_machine.vm.identity[0].principal_id
 }
-*/
