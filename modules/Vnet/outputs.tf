@@ -10,7 +10,7 @@ output "vnet_name" {
 
 output "subnet_ids" {
   value = {
-    for subnet_name, subnet in azurerm_subnet.dynamic :
+    for subnet_name, subnet in azurerm_subnet.dynamic : # iterate with key value 
     subnet_name => subnet.id
   }
 }

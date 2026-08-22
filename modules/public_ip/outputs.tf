@@ -6,7 +6,7 @@ output "public_ip_ids" {
 }
 
 output "public_ip_addresses" {
-  description = "Map of Public IP addresses"
+  description = "map of public IP addresses"
 
   value = {
     for name, ip in azurerm_public_ip.pub_ip :
