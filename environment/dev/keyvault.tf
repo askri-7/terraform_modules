@@ -29,7 +29,7 @@ resource "azurerm_key_vault_access_policy" "vm" {
 resource "azurerm_key_vault_access_policy" "terraform_runner" {
   key_vault_id = azurerm_key_vault.app.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = module.github_actions_identity.principal_id
+  object_id    = module.github_actions_identity.user_assinged_identity_principal_id
 
   secret_permissions = ["Get", "List", "Set", "Delete", "Purge"]
 
