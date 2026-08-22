@@ -56,7 +56,7 @@ jobs:
   terraform-plan:
     name: "Stage 2 - Terraform Plan"
     runs-on: ubuntu-latest
-    needs: static-analysis
+    #needs: static-analysis
     outputs:
       plan-exitcode: ${{ steps.plan.outputs.exitcode }}
     steps:

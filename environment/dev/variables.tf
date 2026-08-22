@@ -290,4 +290,6 @@ variable "smtp_from" {
 variable "smtp_port" {
   type = number
 }
-
+variable "dockerhub_username" {
+  type = string
+}

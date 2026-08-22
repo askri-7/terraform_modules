@@ -69,7 +69,10 @@ module "vm" {
   cloud_init = base64encode(templatefile(var.cloud_init_path, {
     
     domain_name = var.domain_name
-
+    db_password     = var.db_password
+    admin_email     = var.admin_email
+    admin_password  = var.admin_password
+    dockerhub_username = var.dockerhub_username
   
     node_env = var.node_env
     app_port = var.app_port

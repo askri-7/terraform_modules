@@ -1,36 +1,21 @@
 #!/bin/bash
 set -e
 
-#################################
-# Versions
-#################################
-NODE_MAJOR_VERSION="24"
+APP_DIR="/opt/secure-login-demo"
 
 #################################
-# System update
-#################################
-echo "[+] Updating system..."
-apt-get update
-apt-get upgrade -y
-
-#################################
-# Install Docker + Docker Compose plugin
+# Install Docker + Compose plugin
 #################################
 echo "[+] Installing Docker..."
-apt-get install -y ca-certificates curl gnupg lsb-release
+apt-get update
+apt-get install -y ca-certificates curl gnupg
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 chmod a+r /etc/apt/keyrings/docker.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-
-#################################
-# Install Node.js (for frontend build)
-#################################
-echo "[+] Installing Node.js $${NODE_MAJOR_VERSION}..."
-curl -fsSL https://deb.nodesource.com/setup_$${NODE_MAJOR_VERSION}.x | bash -
-apt-get install -y nodejs
+systemctl enable docker
 
 #################################
 # Install Nginx + Certbot
@@ -40,13 +25,7 @@ apt-get install -y nginx certbot python3-certbot-nginx
 systemctl enable nginx
 
 #################################
-# Install Azure CLI (to fetch secrets from Key Vault)
-#################################
-echo "[+] Installing Azure CLI..."
-curl -sL https://aka.ms/InstallAzureCLIDeb | bash
-
-#################################
-# Mount data disk for PostgreSQL persistence
+# Mount data disk
 #################################
 echo "[+] Checking for data disk..."
 DATA_DISK=$(lsblk -dpno NAME,SIZE,TYPE | grep disk | grep -v "$(df / | tail -1 | awk '{print $1}' | sed 's/[0-9]*$//')" | awk '{print $1}' | tail -1)
@@ -65,42 +44,18 @@ else
 fi
 
 #################################
-# Clone application repository
+# Setup app directory
 #################################
-echo "[+] Cloning application..."
-APP_DIR="/opt/secure-login-demo"
-mkdir -p $${APP_DIR}
-cd $${APP_DIR}
-git clone -b ${app_branch} ${app_repo_url} .
+echo "[+] Setting up application directory..."
+mkdir -p "$${APP_DIR}"
+cd "$${APP_DIR}"
 
 #################################
-# Build frontend (served by native Nginx)
-#################################
-echo "[+] Building frontend..."
-cd $${APP_DIR}/frontend
-npm ci
-export VITE_API_URL="/api"
-npm run build
-
-echo "[+] Deploying frontend to Nginx webroot..."
-rm -rf /usr/share/nginx/html/*
-cp -r $${APP_DIR}/frontend/dist/* /usr/share/nginx/html/
-chown -R www-data:www-data /usr/share/nginx/html
-
-##################################
-# Fetch db-password from Key Vault (VM managed identity)
-#################################
-echo "[+] Fetching database password from Key Vault..."
-export POSTGRES_PASSWORD=$(az keyvault secret show \
-  --name db-password \
-  --vault-name ${key_vault_name} \
-  --query value -o tsv)
-
-#################################
-# Write Docker Compose environment file (NON-SENSITIVE ONLY)
+# Write Docker Compose .env file
 #################################
 echo "[+] Writing Docker Compose environment..."
-cat > $${APP_DIR}/.env <<ENVFILE
+cat > "$${APP_DIR}/.env" <<EOF
+DOCKERHUB_USERNAME=${dockerhub_username}
 AZURE_KEY_VAULT_URL=${key_vault_url}
 FRONTEND_URL=${frontend_url}
 API_URL=${api_url}
@@ -117,31 +72,46 @@ GOOGLE_CALLBACK_URL=${google_callback_url}
 SMTP_HOST=${smtp_host}
 SMTP_PORT=${smtp_port}
 SMTP_FROM=${smtp_from}
-ENVFILE
+ADMIN_EMAIL=${admin_email}
+ADMIN_PASSWORD=${admin_password}
+POSTGRES_PASSWORD=${db_password}
+EOF
+chmod 644 "$${APP_DIR}/.env"
 
-chmod 600 $${APP_DIR}/.env
 #################################
-# Configure Nginx (HTTP first — Certbot adds SSL after)
+# Delete secrets from shell memory
+#################################
+echo "[+] Clearing secrets from shell..."
+unset POSTGRES_PASSWORD ADMIN_EMAIL ADMIN_PASSWORD
+
+#################################
+# Configure Nginx
 #################################
 echo "[+] Configuring Nginx..."
-cat > /etc/nginx/sites-available/default <<'NGINX'
+cat > /etc/nginx/sites-available/default <<NGINX
 server {
     listen 80;
     server_name ${domain_name};
 
     location / {
-        root /usr/share/nginx/html;
-        index index.html;
-        try_files $uri $uri/ /index.html;
+        proxy_pass http://127.0.0.1:8080/;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_connect_timeout 30s;
+        proxy_send_timeout 30s;
+        proxy_read_timeout 30s;
     }
 
     location /api/ {
         proxy_pass http://127.0.0.1:${app_port}/;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_connect_timeout 30s;
         proxy_send_timeout 30s;
         proxy_read_timeout 30s;
@@ -149,8 +119,8 @@ server {
 
     location /health {
         proxy_pass http://127.0.0.1:${app_port};
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
     }
 }
 NGINX
@@ -159,7 +129,7 @@ nginx -t
 systemctl start nginx
 
 #################################
-# Obtain SSL certificate (Let's Encrypt)
+# Obtain SSL certificate
 #################################
 echo "[+] Obtaining SSL certificate for ${domain_name}..."
 sleep 15
@@ -173,17 +143,19 @@ certbot --nginx \
   || echo "WARNING: Certbot failed. SSL not configured."
 
 #################################
-# Build backend image & start stack
+# Try to pull and start stack
+# If images don't exist yet (first boot), this is expected.
+# The app CI/CD pipeline will deploy them later.
 #################################
-echo "[+] Building backend image..."
-cd $${APP_DIR}
-docker compose -f docker-compose.prod.yml build backend
+echo "[+] Attempting to pull images from DockerHub..."
+cd "$${APP_DIR}"
+docker compose -f docker-compose.prod.yml pull || echo "WARNING: Images not found on DockerHub yet. App CI/CD will deploy them."
 
-echo "[+] Starting production stack..."
-docker compose -f docker-compose.prod.yml up -d
+echo "[+] Attempting to start stack..."
+docker compose -f docker-compose.prod.yml up -d || echo "WARNING: Could not start stack. Waiting for first deployment from app CI/CD."
 
 #################################
-# Clean up cloud-init artifacts
+# Clean up
 #################################
 echo "[+] Cleaning up cloud-init logs..."
 shred -u /var/lib/cloud/instance/user-data.txt 2>/dev/null || true
@@ -194,8 +166,9 @@ shred -u /var/log/cloud-init-output.log 2>/dev/null || true
 # Final status
 #################################
 echo "================================"
-echo " Deployment Complete"
+echo " VM Bootstrap Complete"
 echo "================================"
 echo "Domain: https://${domain_name}"
-echo "Health: https://${domain_name}/health/live"
-docker compose -f docker-compose.prod.yml ps
+echo "Status: Waiting for app deployment from CI/CD"
+echo "Run: docker compose -f /opt/secure-login-demo/docker-compose.prod.yml up -d"
+docker compose -f docker-compose.prod.yml ps 2>/dev/null || echo "No containers running yet."
