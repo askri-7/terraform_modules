@@ -253,7 +253,14 @@ variable "google_client_secret" {
   sensitive = true
 }
 
-
+variable "terraform_admin_object_id" {
+  type = string
+  sensitive = true
+} 
+variable "smtp_pass" {
+  type      = string
+  sensitive = true
+}
 
 # ═══════════════════════════════════════════
 # APP REPO
@@ -275,10 +282,6 @@ variable "domain_name" {
 
 }
 
-variable "smtp_pass" {
-  type      = string
-  sensitive = true
-}
 
 variable "smtp_host" {
   type = string

@@ -38,7 +38,7 @@ output "private_ip_address" {
 
 output "key_vault_url" {
   description = "URL of the Azure Key Vault"
-  value       = azurerm_key_vault.app.vault_uri
+  value       = module.keyvault.key_vault_uri
 }
 
 

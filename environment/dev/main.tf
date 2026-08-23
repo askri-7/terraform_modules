@@ -69,12 +69,7 @@ module "vm" {
   cloud_init = base64encode(templatefile(var.cloud_init_path, {
     
     domain_name = var.domain_name
-    db_password     = var.db_password
-    admin_email     = var.admin_email
-    admin_password  = var.admin_password
     dockerhub_username = var.dockerhub_username
-  
-    node_env = var.node_env
     app_port = var.app_port
 
     
@@ -93,12 +88,12 @@ module "vm" {
     github_client_id = var.github_client_id
     google_client_id = var.google_client_id
     
-    key_vault_url  = azurerm_key_vault.app.vault_uri
-    key_vault_name = azurerm_key_vault.app.name
+    key_vault_url  = module.keyvault.key_vault_uri
+    key_vault_name = module.keyvault.key_vault_name
     smtp_host = var.smtp_host
     smtp_port = var.smtp_port
     smtp_from = var.smtp_from
-    admin_email = var.admin_email
+   
     app_repo_url = var.app_repo_url
     app_branch   = var.app_branch
   }))
@@ -121,4 +116,22 @@ module "vm" {
   disks                = var.disks
   tags                 = var.tags
 
+}
+
+module "keyvault" {
+  source = "../../modules/keyvault"
+  key_vault_name = "${var.naming.project}-${var.naming.environment}-keyv"
+  location = var.location
+  resource_group_name = var.resource_group_name
+  vm_principal_id = module.vm.principal_id
+  workflow_identity_principal_id = module.github_actions_identity.user_assinged_identity_principal_id
+  terraform_admin_object_id = var.terraform_admin_object_id
+  jwt_secret = var.jwt_secret
+  admin_email = var.admin_email
+  admin_password = var.admin_password
+  db_password = var.db_password
+  smtp_pass = var.smtp_pass
+  google_client_secret = var.google_client_secret
+  github_client_secret = var.github_client_secret
+  
 }
