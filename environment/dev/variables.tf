@@ -169,10 +169,7 @@ variable "app_port" {
   default = 3000
 }
 
-variable "frontend_url" {
-  type = string
 
-}
 
 # ═══════════════════════════════════════════
 # DATABASE (non-sensitive tuning)
@@ -245,10 +242,7 @@ variable "github_client_secret" {
   sensitive = true
 }
 
-variable "github_callback_url" {
-  type = string
 
-}
 //
 variable "google_client_id" {
   type = string
@@ -259,9 +253,13 @@ variable "google_client_secret" {
   sensitive = true
 }
 
-variable "google_callback_url" {
+variable "terraform_admin_object_id" {
   type = string
-
+  sensitive = true
+} 
+variable "smtp_pass" {
+  type      = string
+  sensitive = true
 }
 
 # ═══════════════════════════════════════════
@@ -282,4 +280,19 @@ variable "app_branch" {
 variable "domain_name" {
   type    = string
 
+}
+
+
+variable "smtp_host" {
+  type = string
+}
+variable "smtp_from" {
+  type= string
+  
+}
+variable "smtp_port" {
+  type = number
+}
+variable "dockerhub_username" {
+  type = string
 }

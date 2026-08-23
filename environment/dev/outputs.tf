@@ -36,7 +36,10 @@ output "private_ip_address" {
   value       = module.vm.private_ip_address
 }
 
-
+output "key_vault_url" {
+  description = "URL of the Azure Key Vault"
+  value       = module.keyvault.key_vault_uri
+}
 
 
 
