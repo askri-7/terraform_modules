@@ -1,13 +1,19 @@
 #!/bin/bash
 set -e
 
+#############################
+# Config
+#################################
 APP_DIR="/opt/secure-login-demo"
+DOCKER_DATA="/mnt/docker-data"
 
 #################################
-# Install Docker + Compose plugin
+# System update + Docker
 #################################
+echo "[+] Updating system..."
+apt-get update && apt-get upgrade -y
+
 echo "[+] Installing Docker..."
-apt-get update
 apt-get install -y ca-certificates curl gnupg
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
@@ -17,247 +23,267 @@ apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 systemctl enable docker
 
-#################################
-# Install Nginx + Certbot
-#################################
-echo "[+] Installing Nginx + Certbot..."
-apt-get install -y nginx certbot python3-certbot-nginx
-systemctl enable nginx
+
+usermod -aG docker ${vm_username}
 
 #################################
-# Mount data disk
+# Azure CLI
 #################################
-echo "[+] Checking for data disk..."
-DATA_DISK=$(lsblk -dpno NAME,SIZE,TYPE | grep disk | grep -v "$(df / | tail -1 | awk '{print $1}' | sed 's/[0-9]*$//')" | awk '{print $1}' | tail -1)
+echo "[+] Installing Azure CLI..."
+curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
+#################################
+# VM Identity Login
+#################################
+echo "[+] Authenticating with VM managed identity..."
+LOGGED_IN=0
+i=1
+while [ "$i" -le 10 ]; do
+  if az login --identity >/tmp/az-login.log 2>&1; then
+    LOGGED_IN=1
+    break
+  fi
+  echo "  ...retry $i/10"
+  i=$((i + 1))
+  sleep 10
+done
+if [ "$LOGGED_IN" -ne 1 ]; then
+  echo "ERROR: could not authenticate with managed identity. Aborting."
+  cat /tmp/az-login.log
+  exit 1
+fi
+#################################
+# Data Disk -> Docker
+#################################
+echo "[+] Setting up data disk for Docker..."
+
+# Find the OS disk device
+OS_DISK=$(findmnt -n -o SOURCE / | sed 's/\[.*\]//;s/[0-9]*$//')
+# Find the data disk (any disk that is not the OS disk)
+DATA_DISK=$(lsblk -dpno NAME,TYPE | awk '$2=="disk"{print $1}' | grep -v "^$OS_DISK$" | head -n1)
 
 if [ -z "$DATA_DISK" ]; then
-    echo "WARNING: No data disk found. Using OS disk for data."
+  echo "[!] WARNING: No data disk found. Using OS disk for docker data."
+  mkdir -p "$DOCKER_DATA"
 else
-    echo "[+] Data disk found: $DATA_DISK. Formatting and mounting..."
-    mkfs -t ext4 "$DATA_DISK" 2>/dev/null || true
-    mkdir -p /var/lib/docker/volumes/postgres_data
-    mkdir -p /var/lib/docker/volumes/redis_data
-    mount "$DATA_DISK" /var/lib/docker/volumes/postgres_data
-    echo "$DATA_DISK /var/lib/docker/volumes/postgres_data ext4 defaults,nofail 0 2" >> /etc/fstab
-    chown -R 999:999 /var/lib/docker/volumes/postgres_data
-    echo "[+] Data disk mounted."
+  echo "[+] Data disk found: $DATA_DISK"
+  mkdir -p "$DOCKER_DATA"
+  
+  # FIX: Only format if the disk has no existing filesystem
+  if blkid "$DATA_DISK" > /dev/null 2>&1; then
+    echo "[+] Filesystem already exists on $DATA_DISK. Skipping format."
+  else
+    echo "[+] No filesystem found. Formatting $DATA_DISK..."
+    mkfs.ext4 -F "$DATA_DISK"
+  fi
+  
+  mount "$DATA_DISK" "$DOCKER_DATA"
+  echo "$DATA_DISK $DOCKER_DATA ext4 defaults,nofail 0 2" >> /etc/fstab
 fi
+#################################
+# Fetch app files from GitHub
+#################################
+echo "[+] Fetching deploy files (branch: ${app_branch})..."
+mkdir -p "$APP_DIR/frontend/nginx"
+cd "$APP_DIR"
+
+REPO_PATH=$(echo "${app_repo_url}" | sed -E 's#https?://github\.com/##; s#\.git$##; s#/$##')
+RAW_BASE="https://raw.githubusercontent.com/$${REPO_PATH}/${app_branch}"
+
+curl -fsSL "$${RAW_BASE}/docker-compose.prod.yml" -o "$APP_DIR/docker-compose.prod.yml"
+
 
 #################################
-# Setup app directory
+# Get DB password from Key Vault
 #################################
-echo "[+] Setting up application directory..."
-mkdir -p "$${APP_DIR}"
-cd "$${APP_DIR}"
+echo "[+] Fetching db-password from Key Vault ${key_vault_name}..."
+DB_PASSWORD=$(az keyvault secret show --name db-password --vault-name "${key_vault_name}" --query value -o tsv)
 
 #################################
-# Write Docker Compose .env file
+# Write env files
 #################################
-echo "[+] Writing Docker Compose environment..."
-cat > "$${APP_DIR}/.env" <<EOF
-DOCKERHUB_USERNAME=${dockerhub_username}
+echo "[+] Writing env files..."
+
+cat > "$APP_DIR/backend.env" <<ENVFILE
 AZURE_KEY_VAULT_URL=${key_vault_url}
-FRONTEND_URL=${frontend_url}
-API_URL=${api_url}
+DB_HOST=${db_host}
+DB_PORT=${db_port}
 DB_NAME=${db_name}
 DB_USER=${db_user}
 DB_POOL_MAX=${db_pool_max}
 DB_TIMEOUT=${db_timeout}
 DB_IDLE_TIMEOUT=${db_idle_timeout}
 DB_STATEMENT_TIMEOUT=${db_statement_timeout}
+FRONTEND_URL=${frontend_url}
+API_URL=${api_url}
 GITHUB_CLIENT_ID=${github_client_id}
 GITHUB_CALLBACK_URL=${github_callback_url}
 GOOGLE_CLIENT_ID=${google_client_id}
 GOOGLE_CALLBACK_URL=${google_callback_url}
 SMTP_HOST=${smtp_host}
 SMTP_PORT=${smtp_port}
+SMTP_USER=${smtp_user}
 SMTP_FROM=${smtp_from}
-ADMIN_EMAIL=${admin_email}
-ADMIN_PASSWORD=${admin_password}
-POSTGRES_PASSWORD=${db_password}
-EOF
-chmod 644 "$${APP_DIR}/.env"
+RUN_MIGRATIONS=true
+ENVFILE
+chmod 600 "$APP_DIR/backend.env"
+
+cat > "$APP_DIR/db.env" <<ENVFILE
+POSTGRES_USER=${db_user}
+POSTGRES_PASSWORD=$${DB_PASSWORD}
+POSTGRES_DB=${db_name}
+ENVFILE
+chmod 600 "$APP_DIR/db.env"
+
+unset DB_PASSWORD
+
+cat > "$APP_DIR/.env" <<ENVFILE
+DOCKERHUB_USERNAME=${dockerhub_username}
+DOMAIN_NAME=${domain_name}
+IMAGE_TAG=$${image_tag:-latest}
+ENVFILE
+chmod 600 "$APP_DIR/.env"
+
+chown -R ${vm_username}:${vm_username} "$APP_DIR"
 #################################
-# Write docker-compose.prod.yml
+# Pull & start INFRA first 
 #################################
-echo "[+] Writing docker-compose.prod.yml..."
-cat > "$${APP_DIR}/docker-compose.prod.yml" <<COMPOSE
-services:
-  frontend:
-    image: ${dockerhub_username}/secure-login-demo-frontend:latest
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:8080:80"
-    environment:
-      BACKEND_HOST: backend
-      BACKEND_PORT: "3000"
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
-      interval: 30s
-      timeout: 5s
-      start_period: 10s
-      retries: 3
+echo "[+] Pulling infrastructure images..."
+COMPOSE="docker compose -f docker-compose.prod.yml"
+$COMPOSE pull db redis certbot
 
-  backend:
-    image: ${dockerhub_username}/secure-login-demo-backend:latest
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:3000:3000"
-    environment:
-      AZURE_KEY_VAULT_URL: $${AZURE_KEY_VAULT_URL}
-      NODE_ENV: production
-      PORT: 3000
-      FRONTEND_URL: $${FRONTEND_URL}
-      API_URL: $${API_URL}
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: $${DB_NAME}
-      DB_POOL_MAX: $${DB_POOL_MAX}
-      DB_TIMEOUT: $${DB_TIMEOUT}
-      DB_IDLE_TIMEOUT: $${DB_IDLE_TIMEOUT}
-      DB_STATEMENT_TIMEOUT: $${DB_STATEMENT_TIMEOUT}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      GITHUB_CLIENT_ID: $${GITHUB_CLIENT_ID}
-      GITHUB_CALLBACK_URL: $${GITHUB_CALLBACK_URL}
-      GOOGLE_CLIENT_ID: $${GOOGLE_CLIENT_ID}
-      GOOGLE_CALLBACK_URL: $${GOOGLE_CALLBACK_URL}
-      SMTP_HOST: $${SMTP_HOST}
-      SMTP_PORT: $${SMTP_PORT}
-      SMTP_FROM: $${SMTP_FROM}
-      ADMIN_EMAIL: $${ADMIN_EMAIL}
-      ADMIN_PASSWORD: $${ADMIN_PASSWORD}
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get({host:'127.0.0.1',port:process.env.PORT||3000,path:'/health/live',timeout:3000},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
-      interval: 30s
-      timeout: 5s
-      start_period: 30s
-      retries: 3
+echo "[+] Starting infrastructure (db, redis, certbot)..."
+$COMPOSE up -d db redis certbot
 
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: $${DB_USER}
-      POSTGRES_PASSWORD: $${POSTGRES_PASSWORD}
-      POSTGRES_DB: $${DB_NAME}
-    volumes:
-      - /var/lib/docker/volumes/postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \\$\\$POSTGRES_USER -d \\$\\$POSTGRES_DB"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    volumes:
-      - /var/lib/docker/volumes/redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-COMPOSE
-
-#################################
-# Delete secrets from shell memory
-#################################
-echo "[+] Clearing secrets from shell..."
-unset POSTGRES_PASSWORD ADMIN_EMAIL ADMIN_PASSWORD
-
-#################################
-# Configure Nginx
-#################################
-echo "[+] Configuring Nginx..."
-cat > /etc/nginx/sites-available/default <<NGINX
-server {
-    listen 80;
-    server_name ${domain_name};
-
-    location / {
-        proxy_pass http://127.0.0.1:8080/;
-        proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_connect_timeout 30s;
-        proxy_send_timeout 30s;
-        proxy_read_timeout 30s;
-    }
-
-    location /api/ {
-        proxy_pass http://127.0.0.1:${app_port}/;
-        proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_connect_timeout 30s;
-        proxy_send_timeout 30s;
-        proxy_read_timeout 30s;
-    }
-
-    location /health {
-        proxy_pass http://127.0.0.1:${app_port};
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-    }
-}
-NGINX
-
-nginx -t
-systemctl start nginx
-
-#################################
-# Obtain SSL certificate
-#################################
-echo "[+] Obtaining SSL certificate for ${domain_name}..."
 sleep 15
 
-certbot --nginx \
-  -d ${domain_name} \
-  --non-interactive \
-  --agree-tos \
-  --email ${admin_email} \
-  --redirect \
-  || echo "WARNING: Certbot failed. SSL not configured."
+#################################
+# Try to pull & start APP images (may fail if not pushed yet)
+#################################
+echo "[+] Pulling app images..."
+$COMPOSE pull backend frontend 2>/dev/null || echo "[!] App images not on Docker Hub yet — CI/CD will deploy them later."
+
+echo "[+] Starting app (backend, frontend)..."
+$COMPOSE up -d backend frontend 2>/dev/null || echo "[!] App not started — waiting for first CI/CD deploy."
 
 #################################
-# Try to pull and start stack
-# If images don't exist yet (first boot), this is expected.
-# The app CI/CD pipeline will deploy them later.
+# SSL Certificate Bootstrap
 #################################
-echo "[+] Attempting to pull images from DockerHub..."
-cd "$${APP_DIR}"
-docker compose -f docker-compose.prod.yml pull || echo "WARNING: Images not found on DockerHub yet. App CI/CD will deploy them."
+echo "[+] Setting up SSL certificate..."
 
-echo "[+] Attempting to start stack..."
-docker compose -f docker-compose.prod.yml up -d || echo "WARNING: Could not start stack. Waiting for first deployment from app CI/CD."
+COMPOSE="docker compose -f $APP_DIR/docker-compose.prod.yml"
+DOMAIN_NAME="${domain_name}"
 
+#  Do we already have a real Let's Encrypt cert?
+echo "[+] Checking for existing certificate..."
+if $COMPOSE run --rm --entrypoint sh certbot -c "
+  [ -f /etc/letsencrypt/live/$${DOMAIN_NAME}/fullchain.pem ] && \
+  openssl x509 -in /etc/letsencrypt/live/$${DOMAIN_NAME}/fullchain.pem -noout -issuer 2>/dev/null | grep -qi 'letsencrypt'
+" 2>/dev/null; then
+    echo "[+] Real Let's Encrypt certificate already exists on data disk. Skipping bootstrap."
+    $COMPOSE up -d --remove-orphans
+    $COMPOSE exec frontend nginx -s reload 2>/dev/null || true
+else
+    echo "[+] No real certificate found. Running bootstrap..."
+
+  
+    wait_for_nginx() {
+        local max_attempts=30
+        local wait_sec=2
+        echo "[+] Waiting for nginx to serve on port 80..."
+        for i in $(seq 1 $max_attempts); do
+            if curl -sf --max-time 3 http://localhost > /dev/null 2>&1; then
+                echo "[+] Nginx is responding on port 80 (attempt $i/$max_attempts)."
+                return 0
+            fi
+            echo "    ...not ready yet ($i/$max_attempts), retrying in $${wait_sec}s"
+            sleep $wait_sec
+        done
+        echo "[!] Nginx failed to start after $((max_attempts * wait_sec))s."
+        return 1
+    }
+
+    # --- Step 1: Create placeholder certificate so nginx can boot ---
+    echo "[+] Creating placeholder certificate..."
+    $COMPOSE run --rm --entrypoint sh certbot-init -c "
+      mkdir -p /etc/letsencrypt/live/$${DOMAIN_NAME}
+      if [ ! -f /etc/letsencrypt/live/$${DOMAIN_NAME}/fullchain.pem ]; then
+        openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
+          -keyout /etc/letsencrypt/live/$${DOMAIN_NAME}/privkey.pem \
+          -out /etc/letsencrypt/live/$${DOMAIN_NAME}/fullchain.pem \
+          -subj '/CN=$${DOMAIN_NAME}'
+        echo '[+] Placeholder cert created.'
+      else
+        echo '[+] Certificate already exists.'
+      fi
+    " || {
+        echo "[!] Warning: certbot-init container failed, but continuing..."
+    }
+
+    # --- Step 2: Start the full stack ---
+    echo "[+] Starting application stack..."
+    $COMPOSE up -d --remove-orphans
+
+    # --- Step 3: Wait for nginx to be actually serving ---
+    if ! wait_for_nginx; then
+        echo "[!] CRITICAL: Nginx is not running. Cannot proceed with Let's Encrypt."
+        echo "[!] Frontend logs:"
+        $COMPOSE logs --tail 50 frontend
+        echo "[!] Continuing with placeholder certificate. Site will work but with browser warnings."
+    else
+        # --- Step 4: Obtain real certificate via webroot ---
+        echo "[+] Requesting real certificate from Let's Encrypt..."
+
+        if $COMPOSE run --rm --entrypoint sh certbot -c "
+          certbot certonly --webroot -w /var/www/certbot \
+            -d $${DOMAIN_NAME} \
+            --agree-tos --non-interactive \
+            --register-unsafely-without-email \
+            --cert-name $${DOMAIN_NAME}
+        "; then
+            echo "[+] Real certificate obtained successfully!"
+
+            # --- Step 5: Reload nginx to pick up the real cert ---
+            echo "[+] Reloading nginx with real certificate..."
+            $COMPOSE exec frontend nginx -s reload 2>/dev/null || {
+                echo "[!] Reload failed, restarting frontend..."
+                $COMPOSE restart frontend
+                sleep 3
+            }
+
+            # Verify HTTPS is responding
+            if curl -sf --max-time 5 -k https://localhost > /dev/null 2>&1; then
+                echo "[+] HTTPS is responding with the new certificate."
+            else
+                echo "[!] HTTPS check failed, but nginx should be running."
+            fi
+        else
+            echo "[!] Let's Encrypt failed. Keeping placeholder certificate."
+            echo "[!] Common causes:"
+            echo "    - Port 80 not open in Azure NSG"
+            echo "    - Domain $${DOMAIN_NAME} not pointing to this VM's public IP"
+            echo "    - Let's Encrypt rate limit hit"
+            echo "[!] The site will work with a browser security warning."
+        fi
+    fi
+fi
+
+echo "[+] SSL bootstrap complete."
+$COMPOSE ps
 #################################
-# Clean up
+# Cleanup
 #################################
-echo "[+] Cleaning up cloud-init logs..."
+az logout 2>/dev/null || true
 shred -u /var/lib/cloud/instance/user-data.txt 2>/dev/null || true
 shred -u /var/log/cloud-init.log 2>/dev/null || true
 shred -u /var/log/cloud-init-output.log 2>/dev/null || true
 
 #################################
-# Final status
+# Done
 #################################
 echo "================================"
-echo " VM Bootstrap Complete"
+echo " Cloud-Init Complete"
 echo "================================"
 echo "Domain: https://${domain_name}"
-echo "Status: Waiting for app deployment from CI/CD"
-echo "Run: docker compose -f /opt/secure-login-demo/docker-compose.prod.yml up -d"
-docker compose -f docker-compose.prod.yml ps 2>/dev/null || echo "No containers running yet."
+cd "$APP_DIR"
+$COMPOSE ps 2>/dev/null || echo "No containers yet — waiting for CI/CD."

@@ -179,9 +179,17 @@ variable "db_name" {
   type = string
 
 }
-
-variable "db_user" {
+variable "db_host" {
   type = string
+
+}
+variable "db_port" {
+  type = string
+
+}
+variable "db_user" {
+  type      = string
+  sensitive = true
 
 }
 
@@ -203,6 +211,9 @@ variable "db_idle_timeout" {
 variable "db_statement_timeout" {
   type = number
 
+}
+variable "image_tag" {
+  type = string
 }
 
 # ═══════════════════════════════════════════
@@ -254,9 +265,9 @@ variable "google_client_secret" {
 }
 
 variable "terraform_admin_object_id" {
-  type = string
+  type      = string
   sensitive = true
-} 
+}
 variable "smtp_pass" {
   type      = string
   sensitive = true
@@ -278,7 +289,7 @@ variable "app_branch" {
 
 
 variable "domain_name" {
-  type    = string
+  type = string
 
 }
 
@@ -287,11 +298,14 @@ variable "smtp_host" {
   type = string
 }
 variable "smtp_from" {
-  type= string
-  
+  type = string
+
 }
 variable "smtp_port" {
   type = number
+}
+variable "smtp_user" {
+  type = string
 }
 variable "dockerhub_username" {
   type = string

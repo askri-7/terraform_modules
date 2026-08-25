@@ -67,38 +67,42 @@ module "vm" {
   ### custum config
 
   cloud_init = base64encode(templatefile(var.cloud_init_path, {
-    
-    domain_name = var.domain_name
-    dockerhub_username = var.dockerhub_username
-    app_port = var.app_port
-
-    
+    domain_name         = var.domain_name
     frontend_url        = local.frontend_url
     api_url             = local.api_url
     github_callback_url = local.github_callback_url
     google_callback_url = local.google_callback_url
 
+    github_client_id = var.github_client_id
+    google_client_id = var.google_client_id
+
+    key_vault_url  = module.keyvault.key_vault_uri
+    key_vault_name = module.keyvault.key_vault_name
+
+    smtp_host = var.smtp_host
+    smtp_port = var.smtp_port
+    smtp_user = var.smtp_user
+    smtp_from = var.smtp_from
+
     db_name              = var.db_name
     db_user              = var.db_user
+    db_host              = var.db_host
+    db_port              = var.db_port
     db_pool_max          = var.db_pool_max
     db_timeout           = var.db_timeout
     db_idle_timeout      = var.db_idle_timeout
     db_statement_timeout = var.db_statement_timeout
-    
-    github_client_id = var.github_client_id
-    google_client_id = var.google_client_id
-    
-    key_vault_url  = module.keyvault.key_vault_uri
-    key_vault_name = module.keyvault.key_vault_name
-    smtp_host = var.smtp_host
-    smtp_port = var.smtp_port
-    smtp_from = var.smtp_from
-   
-    app_repo_url = var.app_repo_url
-    app_branch   = var.app_branch
+
+    app_repo_url       = var.app_repo_url
+    app_branch         = var.app_branch
+    dockerhub_username = var.dockerhub_username
+    image_tag          = var.image_tag
+    vm_username        = var.virtual_machine_vars.admin_username
+
+
   }))
 
-  # ... rest unchanged
+
 
   ###  nic 
 
@@ -119,19 +123,20 @@ module "vm" {
 }
 
 module "keyvault" {
-  source = "../../modules/keyvault"
-  key_vault_name = "${var.naming.project}-${var.naming.environment}-keyv"
-  location = var.location
-  resource_group_name = var.resource_group_name
-  vm_principal_id = module.vm.principal_id
+  source                         = "../../modules/keyvault"
+  key_vault_name                 = "${var.naming.project}-${var.naming.environment}-kyv"
+  location                       = var.location
+  resource_group_name            = var.resource_group_name
+  vm_principal_id                = module.vm.principal_id
   workflow_identity_principal_id = module.github_actions_identity.user_assinged_identity_principal_id
-  terraform_admin_object_id = var.terraform_admin_object_id
-  jwt_secret = var.jwt_secret
-  admin_email = var.admin_email
-  admin_password = var.admin_password
-  db_password = var.db_password
-  smtp_pass = var.smtp_pass
-  google_client_secret = var.google_client_secret
-  github_client_secret = var.github_client_secret
-  
+  terraform_admin_object_id      = var.terraform_admin_object_id
+  jwt_secret                     = var.jwt_secret
+  admin_email                    = var.admin_email
+  admin_password                 = var.admin_password
+  db_password                    = var.db_password
+  smtp_pass                      = var.smtp_pass
+  google_client_secret           = var.google_client_secret
+  github_client_secret           = var.github_client_secret
+  tags                           = var.tags
+
 }

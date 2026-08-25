@@ -12,6 +12,7 @@ resource "azurerm_key_vault" "app" {
   tenant_id                   = data.azurerm_client_config.current.tenant_id
   #soft_delete_retention_days  = 7
   purge_protection_enabled    = false
+  tags = var.tags
 
 }
 resource "azurerm_role_assignment" "vm_kv_reader" {

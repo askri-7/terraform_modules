@@ -75,7 +75,7 @@ pub_ips = {
     public_ip_location = "FranceCentral"
     allocation         = "Static"
     sku                = "Standard"
-    label              = "secure-logy"
+    label              = "secure-logy-demo"
   }
 }
 
@@ -140,7 +140,7 @@ disks = {
 
 
 tags = {
-  "environment" = "dev"
+  "environment" = "prod"
   "owner"       = "tmtrack"
   costcenter    = "internshsip"
 }
@@ -153,11 +153,13 @@ cloud_init_path = "../../cloud-init/dockerinit.sh"
 
 node_env     = "production"
 app_port     = 3000
-domain_name  = "secure-logy.francecentral.cloudapp.azure.com"
+domain_name  = "secure-logy-demo.francecentral.cloudapp.azure.com"
 db_name      = "secure_login_db"
 db_user      = "secure_login_app"
+db_host      = "db"
+db_port      = "5320"
 app_repo_url = "https://github.com/askri-7/secure-login-demo.git"
-app_branch   = "main"
+app_branch   = "behind"
 
 # Database tuning
 db_pool_max          = 20
@@ -166,6 +168,9 @@ db_idle_timeout      = 30000
 db_statement_timeout = 30000
 
 # email verification
-smtp_host= "smtp.gmail.com"
-smtp_port= 465
-smtp_from = "askriisra@gmail.com"
+smtp_host = "smtp.gmail.com"
+smtp_user = "askriisra0@gmail.com"
+smtp_port = 465
+smtp_from = "askriisra0@gmail.com"
+
+image_tag = "latest"
