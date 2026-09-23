@@ -53,8 +53,8 @@ The application, reverse proxy, and database run on one host. This keeps the pla
 
 ## Architecture
 
-![Monolithic application architecture](assets/monotholic.png)
-![Azure infrastructure overview](assets/azure_2.png)
+![Monolithic application architecture](assets/monotholic-arch.png)
+
 
 ## Technology Stack
 
