@@ -152,7 +152,10 @@ variable "naming" {
 variable "cloud_init_path" {
   type = string
 }
-
+variable "data_disk_lun" {
+  type    = number
+  default = 0
+}
 
 
 
@@ -160,9 +163,7 @@ variable "cloud_init_path" {
 # APP CONFIGURATION (non-sensitive)
 # ═══════════════════════════════════════════
 
-variable "node_env" {
-  type = string
-}
+
 
 variable "app_port" {
   type    = number

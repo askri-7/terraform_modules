@@ -1,8 +1,27 @@
-# Terraform Modules — Monolithic VM Infrastructure
+# Terraform Modules | Azure Monolithic VM
 
-> **Branch:** `release/1vm`  
-> **Purpose:** Provision a single Azure VM that runs the entire application stack (Nginx, Node.js, PostgreSQL) via cloud-init.  
-> **Application:** this is the app repo => [`secure-login-demo`](https://github.com/askri-7/secure-login-demo)
+<p align="center">
+    <img src="assets/terra.png" alt="Terraform" height="42">
+    <img src="assets/azure.png" alt="Microsoft Azure" height="42">
+    <img src="assets/devops.png" alt="Azure DevOps" height="42">
+    <img src="assets/docker.png" alt="Docker" height="42">
+    <img src="assets/openid.png" alt="OpenID Connect" height="42">
+    <img src="assets/githuba-removebg-preview.png" alt="GitHub Actions" height="42">
+</p>
+
+<p align="center">
+    <strong>Reusable Terraform modules for deploying a secure, single-VM application stack on Azure.</strong>
+</p>
+
+<p align="center">
+    <a href="https://github.com/askri-7/terraform_modules/actions/workflows/iac-pipeline.yml"><img src="https://github.com/askri-7/terraform_modules/actions/workflows/iac-pipeline.yml/badge.svg?branch=release%2F1vm" alt="Terraform CI/CD pipeline"></a>
+    <a href="https://developer.hashicorp.com/terraform"><img src="https://img.shields.io/badge/Terraform-1.15.7-7B42BC?logo=terraform&logoColor=white" alt="Terraform 1.15.7"></a>
+    <a href="https://azure.microsoft.com/"><img src="https://img.shields.io/badge/Azure-azurerm%203.x-0078D4?logo=microsoftazure&logoColor=white" alt="Azure azurerm provider 3.x"></a>
+    <a href="https://github.com/askri-7/terraform_modules/blob/release/1vm/LICENSE"><img src="https://img.shields.io/badge/license-demonstration-lightgrey" alt="Demonstration license"></a>
+</p>
+
+> **Active branch:** `release/1vm`  
+> **Application:** [`secure-login-demo`](https://github.com/askri-7/secure-login-demo)
 
 ---
 

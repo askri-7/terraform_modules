@@ -92,7 +92,8 @@ module "vm" {
     db_timeout           = var.db_timeout
     db_idle_timeout      = var.db_idle_timeout
     db_statement_timeout = var.db_statement_timeout
-
+   
+    data_disk_lun      = var.disks["data"].lun
     app_repo_url       = var.app_repo_url
     app_branch         = var.app_branch
     dockerhub_username = var.dockerhub_username
@@ -124,7 +125,7 @@ module "vm" {
 
 module "keyvault" {
   source                         = "../../modules/keyvault"
-  key_vault_name                 = "${var.naming.project}-${var.naming.environment}-kyv"
+  key_vault_name                 = "${var.naming.project}-${var.naming.environment}-kv"
   location                       = var.location
   resource_group_name            = var.resource_group_name
   vm_principal_id                = module.vm.principal_id
