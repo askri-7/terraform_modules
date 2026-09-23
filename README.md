@@ -85,7 +85,7 @@ Terraform provisions:
 - A user-assigned identity and federated GitHub credential
 - An Azure Key Vault with role assignments for the VM and pipeline identity
 
-![Azure infrastructure provisioning](assets/azure_1.png)
+![Azure infrastructure provisioning](assets/overview.png)
 
 ### 2. VM bootstrap
 
