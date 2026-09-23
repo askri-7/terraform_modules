@@ -19,7 +19,7 @@
   <a href="https://azure.microsoft.com/"><img src="https://img.shields.io/badge/Azure-azurerm%203.x-0078D4?logo=microsoftazure&logoColor=white" alt="Azure azurerm provider 3.x"></a>
 </p>
 
-> **Active branch:** `release/1vm`  
+> **Active branch:** `release/1vm main`  
 > **Application:** [`secure-login-demo`](https://github.com/askri-7/secure-login-demo)
 
 ## Overview
