@@ -5,7 +5,7 @@ resource_group_name  = "isra-rg-01"
 storage_account_name = "terrafstorageaccount01"
 location             = "francecentral"
 naming = {
-  environment = "dev"
+  environment = "prod"
   project     = "internship-web"
 }
 
@@ -75,7 +75,7 @@ pub_ips = {
     public_ip_location = "FranceCentral"
     allocation         = "Static"
     sku                = "Standard"
-    label              = "secure-logy-demo"
+    label              = "secure-logy-dm"
   }
 }
 
@@ -151,9 +151,9 @@ cloud_init_path = "../../cloud-init/dockerinit.sh"
 # APP CONFIG (non-sensitive)
 # ═══════════════════════════════════════════════════════════
 
-node_env     = "production"
+
 app_port     = 3000
-domain_name  = "secure-logy-demo.francecentral.cloudapp.azure.com"
+domain_name  = "secure-logy-dm.francecentral.cloudapp.azure.com"
 db_name      = "secure_login_db"
 db_user      = "secure_login_app"
 db_host      = "db"

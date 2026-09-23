@@ -13,7 +13,7 @@ DOCKER_DATA="/mnt/docker-data"
 echo "[+] Updating system..."
 apt-get update && apt-get upgrade -y
 
-echo "[+] Installing Docker..."
+echo "[+] Installing Docker..."APP_DIR
 apt-get install -y ca-certificates curl gnupg
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
@@ -21,8 +21,12 @@ chmod a+r /etc/apt/keyrings/docker.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-systemctl enable docker
 
+# NOTE: apt's docker-ce postinstall hook starts the daemon automatically
+# during install regardless of what we do here — it will briefly run on the
+# default /var/lib/docker until the data-root section below restarts it
+# with the correct config. That's fine: nothing touches docker in between.
+systemctl enable docker
 
 usermod -aG docker ${vm_username}
 
@@ -52,15 +56,46 @@ if [ "$LOGGED_IN" -ne 1 ]; then
   cat /tmp/az-login.log
   exit 1
 fi
+
 #################################
 # Data Disk -> Docker
 #################################
 echo "[+] Setting up data disk for Docker..."
 
-# Find the OS disk device
+# OS disk device (strip partition suffix)
 OS_DISK=$(findmnt -n -o SOURCE / | sed 's/\[.*\]//;s/[0-9]*$//')
-# Find the data disk (any disk that is not the OS disk)
-DATA_DISK=$(lsblk -dpno NAME,TYPE | awk '$2=="disk"{print $1}' | grep -v "^$OS_DISK$" | head -n1)
+
+RESOURCE_DISK=""
+if [ -e /dev/disk/azure/resource ]; then
+  RESOURCE_DISK=$(readlink -f /dev/disk/azure/resource | sed 's/[0-9]*$//')
+fi
+
+# Data disk LUN comes from Terraform (azurerm_virtual_machine_data_disk_attachment.lun)
+DATA_DISK_LUN="${data_disk_lun}"
+DATA_DISK_LINK="/dev/disk/azure/scsi1/lun$${DATA_DISK_LUN}"
+
+# FIX: cloud-init runs very early in boot; the udev rule that creates the
+# /dev/disk/azure/scsi1/lunN symlink can lag a few seconds behind the disk
+# actually being attached. Retry briefly instead of falling straight to
+# the heuristic fallback on a false negative.
+echo "[+] Waiting for data disk symlink $DATA_DISK_LINK..."
+i=1
+while [ "$i" -le 15 ] && [ ! -e "$DATA_DISK_LINK" ]; do
+  sleep 2
+  i=$((i + 1))
+done
+
+DATA_DISK=""
+if [ -e "$DATA_DISK_LINK" ]; then
+  DATA_DISK=$(readlink -f "$DATA_DISK_LINK")
+  echo "[+] Data disk resolved via LUN $DATA_DISK_LUN: $DATA_DISK"
+else
+  echo "[!] WARNING: $DATA_DISK_LINK never appeared after 30s. Falling back to heuristic detection."
+  DATA_DISK=$(lsblk -dpno NAME,TYPE | awk '$2=="disk"{print $1}' \
+    | grep -v "^$OS_DISK$" \
+    | grep -v "^$RESOURCE_DISK$" \
+    | head -n1)
+fi
 
 if [ -z "$DATA_DISK" ]; then
   echo "[!] WARNING: No data disk found. Using OS disk for docker data."
@@ -68,18 +103,63 @@ if [ -z "$DATA_DISK" ]; then
 else
   echo "[+] Data disk found: $DATA_DISK"
   mkdir -p "$DOCKER_DATA"
-  
-  # FIX: Only format if the disk has no existing filesystem
+
+  # Only format if the disk has no existing filesystem
   if blkid "$DATA_DISK" > /dev/null 2>&1; then
     echo "[+] Filesystem already exists on $DATA_DISK. Skipping format."
   else
     echo "[+] No filesystem found. Formatting $DATA_DISK..."
     mkfs.ext4 -F "$DATA_DISK"
   fi
-  
-  mount "$DATA_DISK" "$DOCKER_DATA"
-  echo "$DATA_DISK $DOCKER_DATA ext4 defaults,nofail 0 2" >> /etc/fstab
+
+  # FIX: use the stable /dev/disk/azure/... symlink in fstab, not the
+  # resolved /dev/sdX name — Azure can renumber SCSI device names across
+  # reboots/resizes, but the LUN symlink is udev-managed and stable.
+  if [ -e "$DATA_DISK_LINK" ]; then
+    FSTAB_SRC="$DATA_DISK_LINK"
+  else
+    FSTAB_SRC="$DATA_DISK"
+  fi
+
+  if ! grep -q "^$FSTAB_SRC " /etc/fstab; then
+    echo "$FSTAB_SRC $DOCKER_DATA ext4 defaults,nofail 0 2" >> /etc/fstab
+  fi
+
+  mount "$DOCKER_DATA" 2>/dev/null || mount "$DATA_DISK" "$DOCKER_DATA"
 fi
+
+# FIX: mounting the disk isn't enough — Docker still defaults to storing
+# images/volumes/containers at /var/lib/docker on the OS disk unless we
+# explicitly point it elsewhere. Configure data-root and start the daemon
+# here, BEFORE any docker command runs, so it never touches the OS disk.
+echo "[+] Pointing Docker's data-root at the mounted disk..."
+mkdir -p "$DOCKER_DATA/docker"
+mkdir -p /etc/docker
+cat > /etc/docker/daemon.json <<EOF
+{
+  "data-root": "$DOCKER_DATA/docker"
+}
+EOF
+
+# FIX: apt's docker-ce postinstall hook auto-starts the daemon during
+# install, before we ever get here — so by this point it's already running
+# on the default /var/lib/docker. "systemctl start" on an already-running
+# service is a no-op and won't pick up the new daemon.json. Use restart
+# unconditionally so the new data-root always takes effect.
+systemctl restart docker
+if ! systemctl is-active --quiet docker; then
+  echo "ERROR: Docker failed to start with data-root=$DOCKER_DATA/docker"
+  journalctl -u docker --no-pager | tail -50
+  exit 1
+fi
+
+ACTUAL_ROOT=$(docker info --format '{{.DockerRootDir}}' 2>/dev/null)
+if [ "$ACTUAL_ROOT" != "$DOCKER_DATA/docker" ]; then
+  echo "ERROR: Docker Root Dir is '$ACTUAL_ROOT', expected '$DOCKER_DATA/docker'."
+  exit 1
+fi
+echo "[+] Docker Root Dir confirmed: $ACTUAL_ROOT"
+
 #################################
 # Fetch app files from GitHub
 #################################
@@ -92,6 +172,12 @@ RAW_BASE="https://raw.githubusercontent.com/$${REPO_PATH}/${app_branch}"
 
 curl -fsSL "$${RAW_BASE}/docker-compose.prod.yml" -o "$APP_DIR/docker-compose.prod.yml"
 
+# FIX: nginx conf directory was created above but nothing ever populated it.
+# If docker-compose.prod.yml bind-mounts ./frontend/nginx into the frontend
+# container, fetch its contents too. Adjust the path/filename to match your repo.
+curl -fsSL "$${RAW_BASE}/frontend/nginx/default.conf" \
+  -o "$APP_DIR/frontend/nginx/default.conf" \
+  || echo "[!] No frontend/nginx/default.conf in repo — remove this fetch or the mkdir above if the image bakes its own config."
 
 #################################
 # Get DB password from Key Vault
@@ -145,8 +231,9 @@ ENVFILE
 chmod 600 "$APP_DIR/.env"
 
 chown -R ${vm_username}:${vm_username} "$APP_DIR"
+
 #################################
-# Pull & start INFRA first 
+# Pull & start INFRA first
 #################################
 echo "[+] Pulling infrastructure images..."
 COMPOSE="docker compose -f docker-compose.prod.yml"
@@ -174,7 +261,7 @@ echo "[+] Setting up SSL certificate..."
 COMPOSE="docker compose -f $APP_DIR/docker-compose.prod.yml"
 DOMAIN_NAME="${domain_name}"
 
-#  Do we already have a real Let's Encrypt cert?
+# Do we already have a real Let's Encrypt cert?
 echo "[+] Checking for existing certificate..."
 if $COMPOSE run --rm --entrypoint sh certbot -c "
   [ -f /etc/letsencrypt/live/$${DOMAIN_NAME}/fullchain.pem ] && \
@@ -186,7 +273,6 @@ if $COMPOSE run --rm --entrypoint sh certbot -c "
 else
     echo "[+] No real certificate found. Running bootstrap..."
 
-  
     wait_for_nginx() {
         local max_attempts=30
         local wait_sec=2
@@ -205,7 +291,11 @@ else
 
     # --- Step 1: Create placeholder certificate so nginx can boot ---
     echo "[+] Creating placeholder certificate..."
-    $COMPOSE run --rm --entrypoint sh certbot-init -c "
+    # FIX: was "certbot-init", a service that (as far as we can tell) is
+    # never pulled/started/defined elsewhere in this script. Use the same
+    # "certbot" service everywhere. Verify the service name in your
+    # docker-compose.prod.yml and adjust if it genuinely differs.
+    $COMPOSE run --rm --entrypoint sh certbot -c "
       mkdir -p /etc/letsencrypt/live/$${DOMAIN_NAME}
       if [ ! -f /etc/letsencrypt/live/$${DOMAIN_NAME}/fullchain.pem ]; then
         openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
@@ -217,7 +307,7 @@ else
         echo '[+] Certificate already exists.'
       fi
     " || {
-        echo "[!] Warning: certbot-init container failed, but continuing..."
+        echo "[!] Warning: certbot container failed, but continuing..."
     }
 
     # --- Step 2: Start the full stack ---
@@ -233,6 +323,20 @@ else
     else
         # --- Step 4: Obtain real certificate via webroot ---
         echo "[+] Requesting real certificate from Let's Encrypt..."
+
+        # FIX: the placeholder cert in Step 1 was written directly with
+        # openssl, not through certbot, so certbot has no renewal lineage
+        # for it. If we leave those files in place, certbot refuses to
+        # overwrite a live/ dir it doesn't recognize as its own and
+        # silently creates live/$DOMAIN-0001 instead — nginx keeps
+        # pointing at the old placeholder and everything "succeeds" while
+        # the site stays on a self-signed cert. Clear it first so certbot
+        # writes to the exact path nginx expects.
+        $COMPOSE run --rm --entrypoint sh certbot -c "
+          rm -rf /etc/letsencrypt/live/$${DOMAIN_NAME} \
+                 /etc/letsencrypt/archive/$${DOMAIN_NAME} \
+                 /etc/letsencrypt/renewal/$${DOMAIN_NAME}.conf
+        " || true
 
         if $COMPOSE run --rm --entrypoint sh certbot -c "
           certbot certonly --webroot -w /var/www/certbot \
@@ -270,6 +374,7 @@ fi
 
 echo "[+] SSL bootstrap complete."
 $COMPOSE ps
+
 #################################
 # Cleanup
 #################################
