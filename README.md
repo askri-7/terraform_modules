@@ -1,198 +1,177 @@
 # Terraform Modules | Azure Monolithic VM
 
 <p align="center">
-    <img src="assets/terra.png" alt="Terraform" height="42">
-    <img src="assets/azure.png" alt="Microsoft Azure" height="42">
-    <img src="assets/devops.png" alt="Azure DevOps" height="42">
-    <img src="assets/docker.png" alt="Docker" height="42">
-    <img src="assets/openid.png" alt="OpenID Connect" height="42">
-    <img src="assets/githuba-removebg-preview.png" alt="GitHub Actions" height="42">
+  <img src="assets/terra.png" alt="Terraform" height="42">
+  <img src="assets/azure.png" alt="Microsoft Azure" height="42">
+  <img src="assets/devops.png" alt="Azure DevOps" height="42">
+  <img src="assets/docker.png" alt="Docker" height="42">
+  <img src="assets/openid.png" alt="OpenID Connect" height="42">
+  <img src="assets/githuba-removebg-preview.png" alt="GitHub Actions" height="42">
 </p>
 
 <p align="center">
-    <strong>Reusable Terraform modules for deploying a secure, single-VM application stack on Azure.</strong>
+  <strong>Reusable Terraform modules for deploying a secure, single-VM application stack on Azure.</strong>
 </p>
 
 <p align="center">
-    <a href="https://github.com/askri-7/terraform_modules/actions/workflows/iac-pipeline.yml"><img src="https://github.com/askri-7/terraform_modules/actions/workflows/iac-pipeline.yml/badge.svg?branch=release%2F1vm" alt="Terraform CI/CD pipeline"></a>
-    <a href="https://developer.hashicorp.com/terraform"><img src="https://img.shields.io/badge/Terraform-1.15.7-7B42BC?logo=terraform&logoColor=white" alt="Terraform 1.15.7"></a>
-    <a href="https://azure.microsoft.com/"><img src="https://img.shields.io/badge/Azure-azurerm%203.x-0078D4?logo=microsoftazure&logoColor=white" alt="Azure azurerm provider 3.x"></a>
-    <a href="https://github.com/askri-7/terraform_modules/blob/release/1vm/LICENSE"><img src="https://img.shields.io/badge/license-demonstration-lightgrey" alt="Demonstration license"></a>
+  <a href="https://github.com/askri-7/terraform_modules/actions/workflows/iac-pipeline.yml"><img src="https://github.com/askri-7/terraform_modules/actions/workflows/iac-pipeline.yml/badge.svg?branch=release%2F1vm" alt="Terraform CI/CD pipeline"></a>
+  <a href="https://developer.hashicorp.com/terraform"><img src="https://img.shields.io/badge/Terraform-1.15.7-7B42BC?logo=terraform&logoColor=white" alt="Terraform 1.15.7"></a>
+  <a href="https://azure.microsoft.com/"><img src="https://img.shields.io/badge/Azure-azurerm%203.x-0078D4?logo=microsoftazure&logoColor=white" alt="Azure azurerm provider 3.x"></a>
 </p>
 
 > **Active branch:** `release/1vm`  
 > **Application:** [`secure-login-demo`](https://github.com/askri-7/secure-login-demo)
 
----
+## Overview
 
-## What This Is
+This branch contains the infrastructure-as-code for a classic monolithic deployment. It provisions one Azure virtual machine and bootstraps the application with cloud-init and Docker Compose.
 
-This branch contains the infrastructure-as-code for a **classic monolithic deployment**. It provisions one virtual machine in Azure and deploys the full-stack application onto it using a cloud-init bootstrap script.
-
-This is the simplest possible production-grade setup: one server, one database, one web server. No containers, no orchestration, no managed identity vaults.
-
----
+The application, reverse proxy, and database run on one host. This keeps the platform small and easy to operate for development, demonstrations, and low-traffic workloads.
 
 ## Repository Structure
 
-```
+```text
 .
-├── documentation/          # Architecture docs
-├── environment/            # Root configs per environment (calls modules)
+├── .github/workflows/       # Terraform CI/CD pipeline
+├── cloud-init/              # VM bootstrap scripts
+├── documentation/           # Architecture and Terraform notes
+├── environment/             # Root configurations per environment
+│   ├── demo/
 │   ├── dev/
-    ├── qa/
-    ├── demo/
 │   ├── preprod/
 │   ├── prod/
-│   
+│   └── qa/
 ├── modules/                 # Reusable Terraform building blocks
+│   ├── keyvault/            # Azure Key Vault integration
+│   ├── public_ip/           # Public IP module
 │   ├── RG/                  # Resource Group module
-    ├── workflow_identity      # the github action identity         
 │   ├── VM/                  # Virtual Machine module
-    ├── public_ip/          # public ip generator
-│   └── Vnet/                # Virtual Network module
+│   ├── Vnet/                # Virtual Network module
+│   └── workflow_identity/   # GitHub Actions federated identity
 └── README.md
 ```
-## Infrastructure architecture : monolithic application
-![ ](assets/monotholic.png)
-![ ](assets/azure_2.png)
 
+## Architecture
 
-## The Stack on the VM
+![Monolithic application architecture](assets/monotholic.png)
+![Azure infrastructure overview](assets/azure_2.png)
+
+## Technology Stack
 
 | Layer | Technology | Role |
-|-------|-----------|------|
-| Edge / TLS | Nginx + Certbot | Handles HTTPS, routes `/api` to the backend, serves the React frontend |
-| Runtime | Node.js 24 + PM2 | Runs the NestJS application as a managed process |
-| Database | PostgreSQL 16 | Stores users, roles, refresh tokens, and audit logs |
-| Data Disk | Azure-managed disk (ext4) | Mounted directly at PostgreSQL's data directory for persistence and growth |
-| Bootstrap | cloud-init | Clones the application repository, installs dependencies, builds, and starts everything |
+| --- | --- | --- |
+| Infrastructure | Terraform and AzureRM | Defines and provisions Azure resources |
+| CI/CD | GitHub Actions | Runs security checks, validation, plan, and apply stages |
+| Authentication | GitHub OIDC and Azure managed identity | Provides short-lived, secretless workload authentication |
+| Edge / TLS | Nginx and Certbot | Terminates HTTPS and routes public traffic |
+| Application | Docker Compose | Runs the frontend, backend, and supporting services |
+| Database | PostgreSQL | Stores application data on persistent managed storage |
+| Secrets | Azure Key Vault | Supplies runtime secrets through managed identity |
+| Bootstrap | cloud-init | Installs Docker, configures storage, and starts the stack |
 
----
+## Deployment Flow
 
-## How Deployment Works
+### 1. Infrastructure provisioning
 
-### 1. Infrastructure Provisioning (GitHub Actions → Terraform)
+GitHub Actions authenticates to Azure with OpenID Connect. The pipeline then runs security and quality checks before Terraform initializes, validates, plans, and applies the configuration in `environment/dev/`.
 
-When you push to this repository or trigger a workflow, GitHub Actions authenticates to Azure using **OpenID Connect (OIDC)** — no long-lived passwords or secrets stored in GitHub. Terraform then creates or updates:
+Terraform provisions:
 
-- A Resource Group
-- A Virtual Network and Subnet
-- A Network Security Group (NSG) allowing TCP 22, 80, and 443
-- A Public IP address
-- A Virtual Machine with a data disk attached
+- A resource group
+- A virtual network and subnet
+- A network security group allowing TCP 22, 80, and 443
+- A static public IP address
+- A virtual machine with an attached managed data disk
+- A user-assigned identity and federated GitHub credential
+- An Azure Key Vault with role assignments for the VM and pipeline identity
 
-![](assets/azure_1.png)
+![Azure infrastructure provisioning](assets/azure_1.png)
 
-### 2. Application Installation (cloud-init)
+### 2. VM bootstrap
 
-When the VM boots for the first time, Azure feeds it a cloud-init script. That script does not use Docker or any container runtime. Instead, it:
+On first boot, cloud-init:
 
-1. Updates the operating system.
-2. Installs Nginx, Certbot, Node.js, PM2, and PostgreSQL.
-3. Formats and mounts the attached data disk directly to PostgreSQL's data directory.
-4. Clones the application repository (branch of your choice) directly from GitHub.
-5. Writes a `.env` file on the server with runtime configuration.
-6. Installs dependencies, generates the Prisma client, runs database migrations, and seeds the admin account.
-7. Builds the frontend and copies it into Nginx's web root.
-8. Obtains an SSL certificate from Let's Encrypt.
-9. Starts the backend under PM2 and enables all services to survive reboots.
-
-The application is live immediately after the VM finishes booting.
-
----
+1. Updates the operating system and installs Docker Engine, Docker Compose, and Azure CLI.
+2. Formats and mounts the attached data disk as Docker's persistent data root.
+3. Authenticates with Azure using the VM managed identity.
+4. Retrieves protected database credentials from Azure Key Vault.
+5. Fetches the production Compose file and reverse-proxy configuration from the application repository.
+6. Writes restricted environment files and starts the production Docker Compose stack.
+7. Leaves the application services and persistent storage enabled across reboots.
 
 ## Network Layout
 
-```
+```text
 Internet
-    │
-    ▼
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Public IP  │────→│     NSG     │────→│     VM      │
-│  (static)   │     │  TCP 80/443 │     │  (NIC)      │
-└─────────────┘     │  TCP 22     │     └──────┬──────┘
-                    └─────────────┘            │
-                                               │
-                                        ┌──────┴──────┐
-                                        │   VNet      │
-                                        │ 10.0.0.0/16 │
-                                        │   Subnet    │
-                                        │10.0.1.0/24  │
-                                        └─────────────┘
+    |
+    v
++-------------+     +-------------+     +----------------+
+| Public IP   | --> | NSG         | --> | Azure VM       |
+| static      |     | TCP 80/443  |     | Docker Compose |
++-------------+     | TCP 22      |     +--------+-------+
+                    +-------------+              |
+                                          +-------+-------+
+                                          | VNet / Subnet |
+                                          | 10.0.0.0/16   |
+                                          | 10.0.1.0/24   |
+                                          +---------------+
 ```
 
-- **Port 80/443**: Nginx serves the React frontend and proxies `/api` to the Node.js backend.
-- **Port 22**: SSH access for emergency maintenance (key-based only).
-- **No other ports are exposed.** The PostgreSQL port (5432) is bound to `localhost` only and is unreachable from the internet.
+- **Ports 80 and 443:** Public web traffic enters through the reverse proxy.
+- **Port 22:** Key-based SSH access for emergency maintenance.
+- **Database access:** PostgreSQL is not exposed by the NSG.
 
----
+## Security Model
 
-## Security Model (This Branch)
+This branch favors a small operational footprint while retaining basic cloud security controls:
 
-This branch is intentionally minimal. It does **not** use:
+- **Secretless CI/CD authentication:** GitHub Actions uses a federated Azure identity instead of a long-lived service principal secret.
+- **Managed identity:** The VM accesses Key Vault without storing an Azure credential on disk.
+- **Protected secrets:** Terraform variables and state can contain sensitive values and must be stored and accessed securely.
+- **Restricted ingress:** Only SSH, HTTP, and HTTPS are allowed by the network security group.
+- **Persistent storage:** Docker data is placed on the attached managed disk rather than relying only on the OS disk.
+- **Single failure domain:** The VM, its application containers, and its data are not highly available in this branch.
 
-- **Azure Key Vault** — secrets are passed through Terraform variables and rendered into the cloud-init script. The `.env` file on the server is restricted to `root:root` with `600` permissions.
-- **Docker / Containers** — the application runs natively on the VM. Process isolation is handled by the OS.
-- **Load Balancer** — a single VM handles all traffic. For a demo or low-traffic production app, this is sufficient.
-- **Private Endpoint / VNet Integration** — the database lives on the same machine as the app. There is no network hop between application and data layer.
+## CI/CD Pipeline
 
-### What is protected
+The workflow in `.github/workflows/iac-pipeline.yml` runs three stages:
 
-- **SSH**: Key-based authentication only. Password auth is disabled by default on Azure Ubuntu images.
-- **Database**: PostgreSQL listens on `localhost` only. No remote TCP access.
-- **Tokens**: The application uses `httpOnly`, `SameSite=Lax` cookies for refresh tokens. LocalStorage is not used for session data.
-- **SSL**: Certbot provisions and auto-renews a Let's Encrypt certificate. All HTTP traffic is redirected to HTTPS.
-- **Cloud-init cleanup**: The script shreds its own logs and user-data at the end of the run to reduce the chance of secret leakage on disk.
+1. **Security and lint checks:** Gitleaks, Checkov, and TFLint.
+2. **Terraform plan:** Provider setup, Azure OIDC login, initialization, validation, and plan artifact upload.
+3. **Terraform apply:** Downloads the reviewed plan and applies it through the protected `dev` environment.
 
----
+The workflow currently targets the `release/1vm` branch and uses Terraform `1.15.7` with the AzureRM `3.x` provider.
 
+## Quick Start
 
-## CI/CD Identity
+This repository expects Azure credentials, GitHub OIDC configuration, Terraform variables, and application secrets to be configured before deployment.
 
-GitHub Actions does not use a service principal secret. Instead, it uses a **Federated Identity Credential**:
+1. Configure the Azure federated identity and required role assignments.
+2. Review the variables in `environment/dev/` and provide values through approved secret or variable stores.
+3. From `environment/dev/`, initialize and validate Terraform:
 
-1. Azure trusts GitHub's OIDC token issuer.
-2. The workflow requests a short-lived token from Azure AD.
-3. Azure verifies the token (repository, branch, workflow name) and issues temporary credentials.
-4. Terraform runs with those credentials and stops when the job ends.
+```bash
+terraform init
+terraform validate
+terraform plan
+```
 
-This eliminates secret rotation for infrastructure pipelines.
+4. Run the GitHub Actions workflow to apply the reviewed plan.
+5. Monitor cloud-init and the Docker Compose services while the VM completes its first boot.
 
----
+Do not commit `*.tfvars` files containing secrets, Terraform state, plans, or generated cloud-init output.
 
-## When to Use This Branch
+## Limitations and Future Paths
 
-Use `release/1vm` when:
+Use this branch for a single deployable application with low to moderate traffic. It is not designed for:
 
-- You want the **fastest path to production** for a monolithic app.
-- Your traffic is low to moderate (a single B2s_v2 or larger VM is enough).
-- You want to avoid the operational overhead of Kubernetes, container registries, and service meshes.
-- You are running a demo, internship project, or early-stage product.
+- High availability or automatic failover
+- Horizontal auto-scaling
+- Multi-region deployments
+- Independent service scaling
+- Workloads requiring zero-downtime upgrades
 
-## When NOT to Use This Branch
-
-Do not use this branch if you need:
-
-- **High availability** — a single VM is a single point of failure.
-- **Auto-scaling** — you must manually resize or redeploy to change capacity.
-- **Secret rotation** — secrets live on disk in `.env` and in Terraform state.
-- **Multi-region** — everything is provisioned in one Azure region.
-- **Microservices** — this is designed for one codebase, one deployable unit.
-
-For those needs, consider a containerized branch with Azure Container Apps, AKS, or App Service.
-
----
-
-## Quick Start (Conceptual)
-
-1. **Set up the OIDC trust** (one time): Run the `workflow_identity` module to allow GitHub Actions to talk to Azure.
-2. **Pick an environment**: Navigate to `environment/dev/`.
-3. **Provide variables**: Domain name, GitHub repo URL, branch, database credentials, OAuth app credentials, etc.
-4. **Run the pipeline**: Push or trigger the workflow. Terraform creates the VM.
-5. **Wait for cloud-init**: The VM boots, installs everything, and the app is live at your domain within ~3–5 minutes.
-
----
+For those requirements, consider Azure Container Apps, App Service, or AKS with a managed database.
 
 ## License
 
